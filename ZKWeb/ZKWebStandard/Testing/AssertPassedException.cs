@@ -2,9 +2,12 @@
 
 namespace ZKWebStandard.Testing {
 	/// <summary>
-	/// 抛出此例外时
-	/// 会把当前测试作为通过处理
+	/// Assert passed exception<br/>
+	/// Will make the test passed<br/>
+	/// 断言通过的例外<br/>
+	/// 会让测试通过<br/>
 	/// </summary>
+	/// <seealso cref="Assert"/>
 	public class AssertPassedException : Exception {
 	}
 }

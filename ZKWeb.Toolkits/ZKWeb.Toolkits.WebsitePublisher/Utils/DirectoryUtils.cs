@@ -1,25 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace ZKWeb.Toolkits.WebsitePublisher.Utils {
 	/// <summary>
-	/// 文件夹的工具函数
+	/// Directory utility functions
 	/// </summary>
 	public static class DirectoryUtils {
 		/// <summary>
-		/// 递归复制文件夹内容
+		/// Copy directory recursivly
 		/// </summary>
-		/// <param name="fromDir">来源文件夹</param>
-		/// <param name="toDir">目标文件夹</param>
-		public static void CopyDirectory(string fromDir, string toDir) {
-			foreach (var path in Directory.EnumerateFiles(fromDir, "*", SearchOption.AllDirectories)) {
+		/// <param name="fromDir">From directory</param>
+		/// <param name="toDir">To directory</param>
+		/// <param name="ignorePattern">Ignore pattern in regex</param>
+		public static void CopyDirectory(string fromDir, string toDir, Regex ignorePattern) {
+			foreach (var path in Directory.EnumerateFileSystemEntries(
+				fromDir, "*", SearchOption.TopDirectoryOnly)) {
+				if (ignorePattern != null && ignorePattern.IsMatch(path)) {
+					continue;
+				}
 				var relPath = path.Substring(fromDir.Length + 1);
 				var toPath = Path.Combine(toDir, relPath);
-				Directory.CreateDirectory(Path.GetDirectoryName(toPath));
-				File.Copy(path, toPath, true);
+				try {
+					if (File.Exists(path)) {
+						Directory.CreateDirectory(Path.GetDirectoryName(toPath));
+						File.Copy(path, toPath, true);
+					} else if (Directory.Exists(path)) {
+						CopyDirectory(path, toPath, ignorePattern);
+					}
+				} catch (PathTooLongException e) {
+					Console.WriteLine(e.ToString());
+				}
 			}
 		}
 	}

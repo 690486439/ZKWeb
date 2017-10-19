@@ -1,38 +1,66 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using ZKWeb.Server;
+using System.Threading;
+using ZKWeb.Storage;
 using ZKWeb.Web;
 using ZKWebStandard.Extensions;
 
 namespace ZKWeb.Plugin {
 	/// <summary>
-	/// 自动重新载入插件和网站配置
-	/// 检测网站目录的以下文件是否有改变，有改变时卸载当前程序域来让下次打开网站时重新载入
-	/// - 插件根目录/*.cs
-	/// - 插件根目录/*.json
-	/// - 插件根目录/*.dll
-	/// - App_Data/*.json (仅根目录)
-	/// - App_Data/DatabaseScript.txt (仅删除)
+	/// Automatic reload plugins and website configuration<br/>
+	/// It will determine the following files are changed then reload the website after<br/>
+	/// 自动重新加载插件和网站配置<br/>
+	/// 它会检测以下文件是否有改变, 并在它们改变后重启网站<br/>
+	/// - {Plugin directory}/*.cs<br/>
+	/// - {Plugin directory}/*.json<br/>
+	/// - {Plugin directory}/*.dll<br/>
+	/// - App_Data/*.json (No recursion)<br/>
+	/// - App_Data/*.ddl (No recursion)<br/>
 	/// </summary>
-	internal static class PluginReloader {
+	public class PluginReloader {
 		/// <summary>
-		/// 启用自动重新载入插件和网站配置
+		/// Is website stopping<br/>
+		/// 是否正在停止网站<br/>
 		/// </summary>
-		internal static void Start() {
-			// 停止网站运行的函数
-			var stopWebsite = new Action(() => {
+		internal protected static int Stopping = 0;
+
+		/// <summary>
+		/// Stop website<br/>
+		/// 停止网站<br/>
+		/// </summary>
+		internal protected static void StopWebsite() {
+			if (Interlocked.Exchange(ref Stopping, 1) == 1) {
+				return;
+			}
+			var thread = new Thread(() => {
+				// Wait requests finished, up to 3 seconds	
+				int retry = 0;
+				while (Application.InProgressRequests > 0 && retry <= 3000) {
+					Thread.Sleep(1);
+					++retry;
+				}
+				// Call stoppers
 				var stoppers = Application.Ioc.ResolveMany<IWebsiteStopper>();
 				stoppers.ForEach(s => s.StopWebsite());
 			});
-			// 文件改变时卸载程序域的函数
+			thread.IsBackground = true;
+			thread.Start();
+		}
+
+		/// <summary>
+		/// Start reloader<br/>
+		/// 启动重加载器<br/>
+		/// </summary>
+		internal protected virtual void Start() {
+			// Function use to handle file changed
 			Action<string> onFileChanged = (path) => {
 				var ext = Path.GetExtension(path).ToLower();
 				if (ext == ".cs" || ext == ".json" || ext == ".dll") {
-					stopWebsite();
+					StopWebsite();
 				}
 			};
-			// 绑定文件监视器的事件处理函数并启用监视器
+			// Function use to start file system watcher
 			Action<FileSystemWatcher> startWatcher = (watcher) => {
 				watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
 				watcher.Changed += (sender, e) => onFileChanged(e.FullPath);
@@ -41,26 +69,26 @@ namespace ZKWeb.Plugin {
 				watcher.Renamed += (sender, e) => { onFileChanged(e.FullPath); onFileChanged(e.OldFullPath); };
 				watcher.EnableRaisingEvents = true;
 			};
-			// 监视插件目录
-			var pathManager = Application.Ioc.Resolve<PathManager>();
+			// Monitor plugin directory
+			var pathManager = Application.Ioc.Resolve<LocalPathManager>();
 			pathManager.GetPluginDirectories().Where(p => Directory.Exists(p)).ForEach(p => {
 				var pluginFilesWatcher = new FileSystemWatcher();
 				pluginFilesWatcher.Path = p;
 				pluginFilesWatcher.IncludeSubdirectories = true;
 				startWatcher(pluginFilesWatcher);
 			});
-			// 监视网站配置文件
-			var pathConfig = Application.Ioc.Resolve<PathConfig>();
+			// Monitor App_Data directory
+			var pathConfig = Application.Ioc.Resolve<LocalPathConfig>();
 			var websiteConfigWatcher = new FileSystemWatcher();
 			websiteConfigWatcher.Path = pathConfig.AppDataDirectory;
 			websiteConfigWatcher.Filter = "*.json";
 			startWatcher(websiteConfigWatcher);
-			// 监视数据库生成脚本，仅监视删除
-			var databaseScriptWatcher = new FileSystemWatcher();
-			databaseScriptWatcher.Path = Path.GetDirectoryName(pathConfig.DatabaseScriptPath);
-			databaseScriptWatcher.Filter = Path.GetFileName(pathConfig.DatabaseScriptPath);
-			databaseScriptWatcher.Deleted += (sender, e) => stopWebsite();
-			databaseScriptWatcher.EnableRaisingEvents = true;
+			// Monitor ddl script files, only trigger when deleted
+			var ddlWatcher = new FileSystemWatcher();
+			ddlWatcher.Path = pathConfig.AppDataDirectory;
+			ddlWatcher.Filter = "*.ddl";
+			ddlWatcher.Deleted += (sender, e) => StopWebsite();
+			ddlWatcher.EnableRaisingEvents = true;
 		}
 	}
 }

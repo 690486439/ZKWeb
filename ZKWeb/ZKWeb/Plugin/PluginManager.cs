@@ -4,24 +4,29 @@ using System.Linq;
 using System.Reflection;
 using ZKWeb.Plugin.AssemblyLoaders;
 using ZKWeb.Server;
+using ZKWeb.Storage;
 using ZKWebStandard.Utils;
 
 namespace ZKWeb.Plugin {
 	/// <summary>
-	/// 插件管理器
+	/// Plugin manager<br/>
+	/// 插件管理器<br/>
 	/// </summary>
 	public class PluginManager {
 		/// <summary>
-		/// 插件列表
+		/// Plugins<br/>
+		/// 插件列表<br/>
 		/// </summary>
 		public virtual IList<PluginInfo> Plugins { get; protected set; }
 		/// <summary>
-		/// 插件程序集列表
+		/// Plugin assemblies<br/>
+		/// 插件程序集列表<br/>
 		/// </summary>
 		public virtual IList<Assembly> PluginAssemblies { get; protected set; }
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
 		public PluginManager() {
 			Plugins = new List<PluginInfo>();
@@ -29,24 +34,33 @@ namespace ZKWeb.Plugin {
 		}
 
 		/// <summary>
-		/// 载入所有插件
-		/// 载入插件的流程
-		///		枚举配置文件中的Plugins
-		///		载入Plugins.json中的插件信息
-		///		使用Csscript编译插件目录下的源代码到dll
-		///		载入编译好的dll
-		///		注册dll中的类型到Ioc中
-		/// 注意
-		///		载入插件后因为需要继续初始化数据库等，所以不会立刻执行IPlugin中的处理
-		///		IPlugin中的处理需要在创建之后手动执行
+		/// Load all plugins<br/>
+		/// Flow<br/>
+		/// - Get plugin names from website configuration<br/>
+		/// - Load plugin information from it's directory<br/>
+		/// - Use roslyn compile service compile the source files to assembly<br/>
+		/// - Load compiled assembly<br/>
+		/// - Register types in assembly to IoC container<br/>
+		/// Attention<br/>
+		/// - IPlugin will not initliaze here because we may need initialize database before<br/>
+		///   you should invoke IPlugin manually after calling this method<br/>
+		/// 加载所有插件<br/>
+		/// 流程<br/>
+		/// - 从网站配置获取插件名称列表<br/>
+		/// - 从插件目录加载插件信息<br/>
+		/// - 使用roslyn编译服务编译插件源代码到程序集<br/>
+		/// - 加载编译后的程序集<br/>
+		/// - 注册程序集中的类型到IoC容器<br/>
+		/// 注意<br/>
+		/// - 插件不会在这里初始化, 因为我们可能需要在这之前初始化数据库<br/>
+		///   你需要在调用这个函数后手动调用IPlugin接口<br/>
 		/// </summary>
-		internal static void Initialize() {
-			var configManager = Application.Ioc.Resolve<ConfigManager>();
-			var pathManager = Application.Ioc.Resolve<PathManager>();
-			var pluginManager = Application.Ioc.Resolve<PluginManager>();
-			pluginManager.Plugins.Clear();
-			pluginManager.PluginAssemblies.Clear();
-			// 获取网站配置中的插件列表并载入插件信息
+		internal protected virtual void Initialize() {
+			var configManager = Application.Ioc.Resolve<WebsiteConfigManager>();
+			var pathManager = Application.Ioc.Resolve<LocalPathManager>();
+			Plugins.Clear();
+			PluginAssemblies.Clear();
+			// Get plugin names from website configuration
 			var pluginDirectories = pathManager.GetPluginDirectories();
 			foreach (var pluginName in configManager.WebsiteConfig.Plugins) {
 				var dir = pluginDirectories
@@ -56,23 +70,25 @@ namespace ZKWeb.Plugin {
 					throw new DirectoryNotFoundException($"Plugin directory of {pluginName} not found");
 				}
 				var info = PluginInfo.FromDirectory(dir);
-				pluginManager.Plugins.Add(info);
+				Plugins.Add(info);
 			}
-			// 载入插件
+			// Load plugins
 			var assemblyLoader = Application.Ioc.Resolve<IAssemblyLoader>();
-			foreach (var plugin in pluginManager.Plugins) {
-				// 编译带源代码的插件
+			foreach (var plugin in Plugins) {
+				// Compile plugin
 				plugin.Compile();
-				// 载入插件程序集，注意部分插件只有资源文件没有程序集
+				// Load compiled assembly, some plugin may not have an assembly
 				var assemblyPath = plugin.AssemblyPath();
 				if (File.Exists(assemblyPath)) {
-					pluginManager.PluginAssemblies.Add(assemblyLoader.LoadFile(assemblyPath));
+					var assembly = assemblyLoader.LoadFile(assemblyPath);
+					plugin.Assembly = assembly;
+					PluginAssemblies.Add(assembly);
 				}
 			}
-			// 注册程序集中的类型到容器中
-			// 只有公开的类型会被注册
-			foreach (var assembly in pluginManager.PluginAssemblies) {
-				var types = assembly.GetTypes().Where(t => t.GetTypeInfo().IsPublic);
+			// Register types in assembly to IoC container
+			// Only public types will be registered
+			foreach (var assembly in PluginAssemblies) {
+				var types = assembly.GetTypes().Where(t => t.IsPublic);
 				Application.Ioc.RegisterExports(types);
 			}
 		}

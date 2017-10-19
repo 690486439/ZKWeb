@@ -6,19 +6,38 @@ using ZKWebStandard.Extensions;
 
 namespace ZKWebStandard.Utils {
 	/// <summary>
-	/// 树形结构的帮助类
+	/// Tree utility functions<br/>
+	/// 树的工具函数<br/>
 	/// </summary>
 	public static class TreeUtils {
 		/// <summary>
-		/// 创建树形结构
-		/// 返回根节点，根节点会自动创建且值是类型的默认值
+		/// Create tree from elements<br/>
+		/// Return root node, root node doesn't have a value<br/>
+		/// 根据元素列表创建树<br/>
+		/// 返回根节点, 根节点不包含值<br/>
 		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <typeparam name="TValue"></typeparam>
-		/// <param name="elements">用于构建树的元素列表</param>
-		/// <param name="getValue">获取储存到节点中的数据的函数</param>
-		/// <param name="getParent">获取上级元素的函数，返回null时上级元素是根节点</param>
+		/// <typeparam name="T">Element type</typeparam>
+		/// <typeparam name="TValue">Value type</typeparam>
+		/// <param name="elements">Source elements</param>
+		/// <param name="getValue">Method for get value from element</param>
+		/// <param name="getParent">Method for get parent element, return null if no parent</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var elements = new List&lt;TestData&gt;() {
+		/// 	new TestData(1, 0, "A"),
+		/// 	new TestData(2, 1, "AA"),
+		/// 	new TestData(3, 1, "AB"),
+		/// 	new TestData(4, 0, "B"),
+		/// 	new TestData(5, 4, "BA"),
+		/// 	new TestData(6, 4, "BB"),
+		/// 	new TestData(7, 6, "BBB"),
+		/// };
+		/// var elementsMapping = elements.ToDictionary(e =&gt; e.Id, e =&gt; e);
+		/// var tree = TreeUtils.CreateTree(elements,
+		/// 	e =&gt; e, e =&gt; elementsMapping.GetOrDefault(e.ParentId));
+		/// </code>
+		/// </example>
 		public static ITreeNode<TValue> CreateTree<T, TValue>(
 			IEnumerable<T> elements, Func<T, TValue> getValue, Func<T, T> getParent) {
 			var root = new TreeNode<TValue>(default(TValue));
@@ -32,14 +51,33 @@ namespace ZKWebStandard.Utils {
 		}
 
 		/// <summary>
-		/// 转换树形结构
-		/// 传入的节点如果不是根节点，将会丢失上级节点
+		/// Transform tree<br/>
+		/// If the given node isn't root node, it will lose it's parent<br/>
+		/// 转换树<br/>
+		/// 如果传入的节点不是根节点, 会失去它的所有上级节点<br/>
 		/// </summary>
-		/// <typeparam name="T">原始类型</typeparam>
-		/// <typeparam name="U">目标类型</typeparam>
-		/// <param name="node">节点</param>
-		/// <param name="convertor">值转换函数</param>
+		/// <typeparam name="T">Original type</typeparam>
+		/// <typeparam name="U">Target type</typeparam>
+		/// <param name="node">The node</param>
+		/// <param name="convertor">Method for convert value from original to target</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var elements = new List&lt;TestData&gt;() {
+		/// 	new TestData(1, 0, "A"),
+		/// 	new TestData(2, 1, "AA"),
+		/// 	new TestData(3, 1, "AB"),
+		/// 	new TestData(4, 0, "B"),
+		/// 	new TestData(5, 4, "BA"),
+		/// 	new TestData(6, 4, "BB"),
+		/// 	new TestData(7, 6, "BBB"),
+		/// };
+		/// var elementsMapping = elements.ToDictionary(e =&gt; e.Id, e =&gt; e);
+		/// var tree = TreeUtils.CreateTree(elements,
+		/// 	e =&gt; e, e =&gt; elementsMapping.GetOrDefault(e.ParentId));
+		/// var newTree = TreeUtils.Transform(TestData.GetTestTree(), d =&gt; d?.Name);
+		/// </code>
+		/// </example>
 		public static ITreeNode<U> Transform<T, U>(ITreeNode<T> node, Func<T, U> convertor) {
 			var unode = new TreeNode<U>(convertor(node.Value));
 			foreach (var childNode in node.Childs) {
@@ -49,33 +87,39 @@ namespace ZKWebStandard.Utils {
 		}
 
 		/// <summary>
-		/// 树节点
+		/// Tree node<br/>
+		/// 树节点<br/>
 		/// </summary>
-		/// <typeparam name="T"></typeparam>
+		/// <typeparam name="T">Value type</typeparam>
 		class TreeNode<T> : ITreeNode<T> {
 			/// <summary>
-			/// 树中储存的值
+			/// Value<br/>
+			/// 值<br/>
 			/// </summary>
 			public T Value { get; set; }
 			/// <summary>
-			/// 上级节点，根节点时等于null
+			/// Parent node, maybe null<br/>
+			/// 上级节点, 可能是null<br/>
 			/// </summary>
 			[JsonIgnore]
 			public ITreeNode<T> Parent { get; set; }
 			/// <summary>
-			/// 下级节点的列表
+			/// Child nodes<br/>
+			/// 子节点列表<br/>
 			/// </summary>
 			[JsonIgnore]
 			List<ITreeNode<T>> ChildList { get; set; }
 			/// <summary>
-			/// 下级节点的列表，不能修改
+			/// Child nodes, for interface<br/>
+			/// 子节点列表, 接口用<br/>
 			/// </summary>
 			public IEnumerable<ITreeNode<T>> Childs {
 				get { return ChildList; }
 			}
 
 			/// <summary>
-			/// 初始化
+			/// Initialize<br/>
+			/// 初始化<br/>
 			/// </summary>
 			/// <param name="value"></param>
 			public TreeNode(T value) {
@@ -85,7 +129,8 @@ namespace ZKWebStandard.Utils {
 			}
 
 			/// <summary>
-			/// 添加子节点，失败时抛出例外
+			/// Add child node, throw exception if failed<br/>
+			/// 添加子节点, 失败时抛出例外<br/>
 			/// </summary>
 			public void AddChildNode(ITreeNode<T> node) {
 				if (node == null) {
@@ -102,7 +147,8 @@ namespace ZKWebStandard.Utils {
 			}
 
 			/// <summary>
-			/// 删除子节点，没有找到对应的子节点时不抛出例外
+			/// Remove child node, do nothing if not found<br/>
+			/// 删除子节点, 不存在时忽略<br/>
 			/// </summary>
 			public void RemoveChildNode(ITreeNode<T> node) {
 				if (node.Parent == this) {
@@ -112,7 +158,8 @@ namespace ZKWebStandard.Utils {
 			}
 
 			/// <summary>
-			/// 返回显示树结构的字符串
+			/// Serialize tree to json<br/>
+			/// 序列化树到json<br/>
 			/// </summary>
 			/// <returns></returns>
 			public override string ToString() {
@@ -122,33 +169,38 @@ namespace ZKWebStandard.Utils {
 	}
 
 	/// <summary>
-	/// 树节点
+	/// Interface for tree node<br/>
+	/// 树节点的接口<br/>
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	public interface ITreeNode<T> {
 		/// <summary>
-		/// 树中储存的值
+		/// Value<br/>
+		/// 值<br/>
 		/// </summary>
 		T Value { get; set; }
 		/// <summary>
-		/// 上级节点，根节点时等于null
-		/// 注意必须标记JsonIgnore否则会导致序列化时出现死循环
+		/// Parent node, maybe null<br/>
+		/// 上级节点, 可能是null<br/>
 		/// </summary>
 		[JsonIgnore]
 		ITreeNode<T> Parent { get; set; }
 		/// <summary>
-		/// 子节点的列表
+		/// Child nodes<br/>
+		/// 子节点列表<br/>
 		/// </summary>
 		IEnumerable<ITreeNode<T>> Childs { get; }
 		/// <summary>
-		/// 添加子节点，失败时抛出例外
+		/// Add child node, throw exception if failed<br/>
+		/// 添加子节点, 失败时抛出例外<br/>
 		/// </summary>
-		/// <param name="node">添加的节点</param>
+		/// <param name="node">Node to add</param>
 		void AddChildNode(ITreeNode<T> node);
 		/// <summary>
-		/// 删除子节点，没有找到对应的子节点时不抛出例外
+		/// Remove child node, do nothing if not found<br/>
+		/// 删除子节点, 不存在时忽略<br/>
 		/// </summary>
-		/// <param name="node">删除的节点</param>
+		/// <param name="node">Node to remove</param>
 		void RemoveChildNode(ITreeNode<T> node);
 	}
 }

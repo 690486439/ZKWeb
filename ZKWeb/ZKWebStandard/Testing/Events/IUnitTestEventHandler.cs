@@ -1,56 +1,67 @@
 ﻿namespace ZKWebStandard.Testing.Events {
 	/// <summary>
-	/// 测试的事件处理器
+	/// Test event handler<br/>
+	/// 测试事件处理器<br/>
 	/// </summary>
 	public interface ITestEventHandler {
 		/// <summary>
-		/// 运行所有测试前的处理
+		/// On all test starting<br/>
+		/// 所有测试开始后的处理<br/>
 		/// </summary>
-		/// <param name="info">信息对象</param>
+		/// <param name="info">Information object</param>
 		void OnAllTestStarting(AllTestStartingInfo info);
 
 		/// <summary>
-		/// 所有测试运行完毕后的处理
+		/// On all test completed<br/>
+		/// 所有测试完成后的处理<br/>
 		/// </summary>
-		/// <param name="info">信息对象</param>
+		/// <param name="info">Information object</param>
 		void OnAllTestCompleted(AllTestCompletedInfo info);
 
 		/// <summary>
-		/// 单项测试开始时的处理
+		/// On single test starting<br/>
+		/// 单个测试开始时的处理<br/>
 		/// </summary>
-		/// <param name="info">信息对象</param>
+		/// <param name="info">Information object</param>
 		void OnTestStarting(TestStartingInfo info);
 
 		/// <summary>
-		/// 单项测试通过时的处理
+		/// On single test passed<br/>
+		/// 单个测试通过时的处理<br/>
 		/// </summary>
-		/// <param name="info">信息对象</param>
+		/// <param name="info">Information object</param>
 		void OnTestPassed(TestPassedInfo info);
 
 		/// <summary>
-		/// 单项测试失败时的处理
+		/// On single test failed<br/>
+		/// 单个测试失败时的处理<br/>
 		/// </summary>
-		/// <param name="info">信息对象</param>
+		/// <param name="info">Information object</param>
 		void OnTestFailed(TestFailedInfo info);
 
 		/// <summary>
-		/// 单项测试跳过时的处理
+		/// On single test skipped<br/>
+		/// 单个测试跳过时的处理<br/>
 		/// </summary>
-		/// <param name="info">信息对象</param>
+		/// <param name="info">Information object</param>
 		void OnTestSkipped(TestSkippedInfo info);
 
 		/// <summary>
-		/// 处理额外的错误信息
-		/// 初始化或释放测试类的实例失败时会调用这个函数
+		/// On error message<br/>
+		/// Create or dispose test instance failed will trigger this event<br/>
+		/// 错误消息的处理<br/>
+		/// 创建或销毁测试实例失败时会触发这个事件<br/>
 		/// </summary>
-		/// <param name="info">信息对象</param>
+		/// <param name="info">Information object</param>
 		void OnErrorMessage(ErrorMessageInfo info);
 
 		/// <summary>
-		/// 处理额外的除错信息
-		/// 测试中需要输出除错信息时会调用这个函数
+		/// On debug message<br/>
+		/// Call testRunner.WriteDebugMessage will trigger this event<br/>
+		/// 除错消息的处理<br/>
+		/// 调用testRunner.WriteDebugMessage会触发这个事件<br/>
 		/// </summary>
-		/// <param name="info">信息对象</param>
+		/// <param name="info">Information object</param>
 		void OnDebugMessage(DebugMessageInfo info);
 	}
 }

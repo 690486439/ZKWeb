@@ -2,19 +2,26 @@
 
 namespace ZKWebStandard.Ioc {
 	/// <summary>
-	/// 设置重用策略的属性
+	/// Reuse type attribute<br/>
+	/// It should use with ExportManyAttributes<br/>
+	/// 标记重用类型的属性<br/>
+	/// 应该与ExportManyAttribute一起使用<br/>
 	/// </summary>
+	/// <seealso cref="IContainer"/>
+	/// <seealso cref="Container"/>
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false)]
 	public class ReuseAttribute : Attribute {
 		/// <summary>
-		/// 重用策略
+		/// Reuse type<br/>
+		/// 重用类型<br/>
 		/// </summary>
 		public ReuseType ReuseType { get; set; }
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
-		/// <param name="reuseType">重用策略</param>
+		/// <param name="reuseType">Reuse type</param>
 		public ReuseAttribute(ReuseType reuseType) {
 			ReuseType = reuseType;
 		}

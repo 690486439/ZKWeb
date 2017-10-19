@@ -6,67 +6,83 @@ using ZKWeb.Templating.DynamicContents;
 
 namespace ZKWeb.Templating.TemplateTags {
 	/// <summary>
-	/// 用于提供动态内容的区域
-	/// 区域Id要求全局唯一
-	/// 描画流程
-	/// - 读取自定义模块列表，存在时描画这个列表
-	/// - 描画默认的模块列表
+	/// Dotliquid area tag<br/>
+	/// Id must be unique in all templates<br/>
+	/// Flow<br/>
+	/// - Render custom widgets if it's specified, otherwise<br/>
+	/// - Render default widgets<br/>
+	/// 区域标签<br/>
+	/// Id必须在所有模板中唯一<br/>
+	/// 流程<br/>
+	/// - 如果有定义自定义模块则描画自定义模块, 否则<br/>
+	/// - 描画默认模块<br/>
 	/// </summary>
+	/// <seealso cref="TemplateManager"/>
 	/// <example>
+	/// <code>
 	/// {% area test_area %}
-	/// 生成的Html（使用[]代替）
-	/// [div class='template_area' area_id='test_area']
-	///		[div class='template_widget'][/div]
-	///		[div class='template_widget'][/div]
-	///		[div class='template_widget'][/div]
-	/// [/div]
+	/// </code>
+	/// 
+	/// <code>
+	/// Generates html
+	/// &lt;div class='template_area' area_id='test_area'&gt;
+	///		&lt;div class='template_widget'&gt;&lt;/div&gt;
+	///		&lt;div class='template_widget'&gt;&lt;/div&gt;
+	///		&lt;div class='template_widget'&gt;&lt;/div&gt;
+	/// &lt;/div&gt;
+	/// </code>
 	/// </example>
 	public class Area : Tag {
 		/// <summary>
-		/// 保存当前区域Id时使用的键名
+		/// Key name use to store area id<br/>
+		/// Use to detect nested area<br/>
+		/// 储存区域Id的键名<br/>
+		/// 用于检测区域是否嵌套<br/>
 		/// </summary>
 		public static string CurrentAreaIdKey { get; set; } = "__current_area_id";
 		/// <summary>
-		/// 区域Id
+		/// Area id<br/>
+		/// 区域Id<br/>
 		/// </summary>
 		public string AreaId { get; protected set; }
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
 		public override void Initialize(string tagName, string markup, List<string> tokens) {
-			// 调用基础类的基础
+			// Call base method
 			base.Initialize(tagName, markup, tokens);
-			// 获取区域Id
+			// Get area id
 			AreaId = Markup.Trim();
 		}
 
 		/// <summary>
-		/// 描画标签
+		/// Render tag<br/>
+		/// 描画标签<br/>
 		/// </summary>
 		/// <param name="context"></param>
 		/// <param name="result"></param>
 		public override void Render(Context context, TextWriter result) {
-			// 区域不能嵌套
+			// Nested area is unsupported
 			if (context[CurrentAreaIdKey] != null) {
 				throw new FormatException("area tag can't be nested");
 			}
-			// 获取模块列表
+			// Get child widgets
 			var areaManager = Application.Ioc.Resolve<TemplateAreaManager>();
 			var widgets = areaManager.GetCustomWidgets(AreaId) ??
 				areaManager.GetArea(AreaId).DefaultWidgets;
-			// 添加div的开头
+			// Render div begin tag
 			result.Write($"<div class='template_area' area_id='{AreaId}'>");
-			// 描画子元素
-			var scope = Hash.FromDictionary(new Dictionary<string, object>() {
-				{ CurrentAreaIdKey, AreaId }
-			});
+			// Render child widgets
+			var scope = new Hash();
+			scope.Add(CurrentAreaIdKey, AreaId);
 			context.Stack(scope, () => {
 				foreach (var widget in widgets) {
 					result.Write(areaManager.RenderWidget(context, widget));
 				}
 			});
-			// 添加div的末尾
+			// Render div end tag
 			result.Write("</div>");
 		}
 	}

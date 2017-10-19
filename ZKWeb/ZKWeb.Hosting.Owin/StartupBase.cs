@@ -1,17 +1,27 @@
 ﻿using Owin;
-using System;
 using System.IO;
-using System.Threading.Tasks;
 using System.Web;
+using ZKWeb.Server;
 using ZKWebStandard.Extensions;
 
 namespace ZKWeb.Hosting.Owin {
 	/// <summary>
-	/// Owin程序配置类的基类
+	/// Base startup class for owin<br/>
+	/// Owin的启动类的基类<br/>
 	/// </summary>
-	public abstract class StartupBase {
+	public abstract class StartupBase : StartupBase<DefaultApplication> {
+
+	}
+
+	/// <summary>
+	/// Base startup class for owin<br/>
+	/// Owin的启动类的基类<br/>
+	/// </summary>
+	public abstract class StartupBase<TApplication>
+		where TApplication : IApplication, new() {
 		/// <summary>
-		/// 获取网站根目录
+		/// Get website root directory<br/>
+		/// 获取网站根目录<br/>
 		/// </summary>
 		/// <returns></returns>
 		public virtual string GetWebsiteRootDirectory() {
@@ -23,35 +33,23 @@ namespace ZKWeb.Hosting.Owin {
 		}
 
 		/// <summary>
-		/// 配置Owin程序
+		/// Allow child class to configure other middlewares before zkweb middleware<br/>
+		/// 允许子类配置其他在zkweb之前的中间件<br/>
 		/// </summary>
-		/// <param name="app"></param>
+		protected virtual void ConfigureMiddlewares(IAppBuilder app) { }
+
+		/// <summary>
+		/// Configure application<br/>
+		/// 配置应用程序<br/>
+		/// </summary>
+		/// <param name="app">Owin application</param>
 		public virtual void Configuration(IAppBuilder app) {
-			// 初始化程序
+			// configure other middlewares
+			ConfigureMiddlewares(app);
+			// configure zkweb middleware
 			var websiteRootDirectory = app.Properties.GetOrDefault<string>("host.WebsiteRootDirectory");
 			websiteRootDirectory = websiteRootDirectory ?? GetWebsiteRootDirectory();
-			Application.Ioc.RegisterMany<OwinWebsiteStopper>();
-			Application.Initialize(websiteRootDirectory);
-			// 设置处理请求的函数
-			// 处理会在线程池中运行
-			app.Run(owinContext => Task.Run(() => {
-				var context = new OwinHttpContextWrapper(owinContext);
-				try {
-					// 处理请求
-					Application.OnRequest(context);
-				} catch (OwinHttpResponseEndException) {
-					// 正常处理完毕
-				} catch (Exception ex) {
-					// 处理错误
-					try {
-						Application.OnError(context, ex);
-					} catch (OwinHttpResponseEndException) {
-						// 错误处理完毕
-					} catch (Exception) {
-						// 错误处理失败
-					}
-				}
-			}));
+			app.UseZKWeb<TApplication>(GetWebsiteRootDirectory());
 		}
 	}
 }

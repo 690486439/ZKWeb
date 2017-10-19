@@ -1,88 +1,85 @@
 ﻿#if NETCORE
 using Microsoft.Extensions.DependencyModel;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using ZKWebStandard.Extensions;
 
 namespace ZKWeb.Plugin.AssemblyLoaders {
 	/// <summary>
-	/// .Net Core使用的程序集载入器
+	/// Assembly loader for .Net Core<br/>
+	/// .Net Core使用的程序集加载器<br/>
 	/// </summary>
-	internal class CoreAssemblyLoader : IAssemblyLoader {
+	internal class CoreAssemblyLoader : AssemblyLoaderBase {
 		/// <summary>
-		/// 载入程序集使用的上下文
+		/// The load context<br/>
+		/// 加载上下文<br/>
 		/// </summary>
 		private LoadContext Context { get; set; }
-		/// <summary>
-		/// 用于包装mscorlib的程序集名称的集合
-		/// Roslyn的"IgnoreCorLibraryDuplicatedTypes"选项没有公开，所以需要在这里处理
-		/// </summary>
-		private HashSet<string> WrapperAssemblyNames { get; set; }
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
 		public CoreAssemblyLoader() {
 			Context = new LoadContext();
-			WrapperAssemblyNames = new HashSet<string>() {
-				"System.Console"
-			};
-		}
-
-		/// <summary>
-		/// 获取当前已载入的程序集列表
-		/// 排除仅用于包装的程序集和动态程序集
-		/// </summary>
-		public IList<Assembly> GetLoadedAssemblies() {
-			return DependencyContext.Default.RuntimeLibraries
-				.SelectMany(l => l.GetDefaultAssemblyNames(DependencyContext.Default))
-				.Where(name => !WrapperAssemblyNames.Contains(name.Name))
-				.Select(name => Context.LoadFromAssemblyName(name))
-				.Where(assembly => !assembly.IsDynamic).ToList();
-		}
-
-		/// <summary>
-		/// 根据名称载入程序集
-		/// </summary>
-		public Assembly Load(string name) {
-			return Context.LoadFromAssemblyName(new AssemblyName(name));
-		}
-
-		/// <summary>
-		/// 根据名称载入程序集
-		/// </summary>
-		public Assembly Load(AssemblyName assemblyName) {
-			return Context.LoadFromAssemblyName(assemblyName);
-		}
-
-		/// <summary>
-		/// 从二进制数据载入程序集
-		/// </summary>
-		public Assembly Load(byte[] rawAssembly) {
-			using (var stream = new MemoryStream(rawAssembly)) {
-				return Context.LoadFromStream(stream);
+			foreach (var library in DependencyContext.Default.RuntimeLibraries) {
+				foreach (var assemblyName in library.GetDefaultAssemblyNames(DependencyContext.Default)) {
+					Load(assemblyName);
+				}
 			}
 		}
 
 		/// <summary>
-		/// 从文件载入程序集
+		/// Load assembly by name<br/>
+		/// 根据名称加载程序集<br/>	
 		/// </summary>
-		public Assembly LoadFile(string path) {
-			return Context.LoadFromAssemblyPath(path);
+		public override Assembly Load(string name) {
+			name = ReplacementAssemblies.GetOrDefault(name, name);
+			var assembly = Context.LoadFromAssemblyName(new AssemblyName(name));
+			return HandleLoadedAssembly(assembly);
 		}
 
 		/// <summary>
-		/// 载入程序集使用的上下文
+		/// Load assembly by name object<br/>
+		/// 根据名称对象加载程序集<br/>
+		/// </summary>
+		public override Assembly Load(AssemblyName assemblyName) {
+			var assembly = Context.LoadFromAssemblyName(assemblyName);
+			return HandleLoadedAssembly(assembly);
+		}
+
+		/// <summary>
+		/// Load assembly from it's binary contents<br/>
+		/// 根据二进制内容加载程序集<br/>
+		/// </summary>
+		public override Assembly Load(byte[] rawAssembly) {
+			using (var stream = new MemoryStream(rawAssembly)) {
+				var assembly = Context.LoadFromStream(stream);
+				return HandleLoadedAssembly(assembly);
+			}
+		}
+
+		/// <summary>
+		/// Load assembly from file path<br/>
+		/// 根据文件路径加载程序集<br/>
+		/// </summary>
+		public override Assembly LoadFile(string path) {
+			var assembly = Context.LoadFromAssemblyPath(path);
+			return HandleLoadedAssembly(assembly);
+		}
+
+		/// <summary>
+		/// Assembly loading context<br/>
+		/// 程序集的加载上下文<br/>
 		/// </summary>
 		private class LoadContext : AssemblyLoadContext {
 			protected override Assembly Load(AssemblyName assemblyName) {
 				try {
-					// 尝试直接载入
+					// load it directly
 					return Assembly.Load(assemblyName);
 				} catch {
-					// 失败时枚举插件的引用文件夹载入
+					// if failed, try to load it from reference directory under plugin directory
 					var pluginManager = Application.Ioc.Resolve<PluginManager>();
 					foreach (var plugin in pluginManager.Plugins) {
 						var path = plugin.ReferenceAssemblyPath(assemblyName.Name);

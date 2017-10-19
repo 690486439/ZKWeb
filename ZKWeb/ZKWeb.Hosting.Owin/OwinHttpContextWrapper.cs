@@ -4,23 +4,28 @@ using ZKWebStandard.Web;
 
 namespace ZKWeb.Hosting.Owin {
 	/// <summary>
-	/// 包装Owin的Http上下文
+	/// Http context wrapper for Owin<br/>
+	/// Owin的Http上下文的包装类<br/>
 	/// </summary>
 	internal class OwinHttpContextWrapper : IHttpContext {
 		/// <summary>
-		/// Owin的Http上下文
+		/// Original Http context<br/>
+		/// 原始的Http上下文<br/>
 		/// </summary>
 		protected IOwinContext OwinContext { get; set; }
 		/// <summary>
-		/// 包装好的Http请求
+		/// Wrapped http request<br/>
+		/// 包装后的Http请求<br/>
 		/// </summary>
 		protected OwinHttpRequestWrapper ChildRequest { get; set; }
 		/// <summary>
-		/// 包装好的Http回应
+		/// Wrapped http response<br/>
+		/// 包装后的Http回应<br/>
 		/// </summary>
 		protected OwinHttpResponseWrapper ChildResponse { get; set; }
 		/// <summary>
-		/// Http上下文中共享的数据
+		/// Http context bound items<br/>
+		/// Http上下文绑定的数据<br/>
 		/// </summary>
 		protected Dictionary<object, object> ChildItems { get; set; }
 
@@ -35,9 +40,10 @@ namespace ZKWeb.Hosting.Owin {
 		}
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
-		/// <param name="owinContext">Owin的Http上下文</param>
+		/// <param name="owinContext">Original http context</param>
 		public OwinHttpContextWrapper(IOwinContext owinContext) {
 			OwinContext = owinContext;
 			ChildRequest = new OwinHttpRequestWrapper(this, owinContext.Request);

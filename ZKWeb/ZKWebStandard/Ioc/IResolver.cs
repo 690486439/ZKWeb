@@ -3,26 +3,45 @@ using System.Collections.Generic;
 
 namespace ZKWebStandard.Ioc {
 	/// <summary>
-	/// Ioc容器的解决器接口
+	/// Interface for resolver<br/>
+	/// 解决器的接口<br/>
 	/// </summary>
+	/// <seealso cref="IContainer"/>
+	/// <seealso cref="Container"/>
 	public interface IResolver {
 		/// <summary>
-		/// 获取注册到服务类型并关联了指定键的单个实例
-		/// 没有注册或注册了多个时按无法解决时的策略处理
+		/// Resolve service with type and key<br/>
+		/// Throw exception or return default value if not found, dependent on ifUnresolved<br/>
+		/// 根据服务类型和服务键获取实例<br/>
+		/// 找不到时根据ifUnresolved参数抛出例外或者返回默认值<br/>
 		/// </summary>
-		/// <param name="serviceType">服务类型</param>
-		/// <param name="ifUnresolved">无法解决时的策略</param>
-		/// <param name="serviceKey">关联键</param>
+		/// <param name="serviceType">Service type</param>
+		/// <param name="ifUnresolved">Action when service unresolved</param>
+		/// <param name="serviceKey">Service key</param>
 		/// <returns></returns>
 		object Resolve(Type serviceType, IfUnresolved ifUnresolved = IfUnresolved.Throw, object serviceKey = null);
 
 		/// <summary>
-		/// 获取注册到服务类型并关联了指定键的单个或多个实例
-		/// 没有注册时返回空列表
+		/// Resolve services with type and key<br/>
+		/// Return empty sequence if no service registered<br/>
+		/// 根据服务类型和服务键获取实例列表<br/>
+		/// 如果无注册的服务则返回空列表<br/>
 		/// </summary>
-		/// <param name="serviceType">服务类型</param>
-		/// <param name="serviceKey">关联键</param>
+		/// <param name="serviceType">Service type</param>
+		/// <param name="serviceKey">Service key</param>
 		/// <returns></returns>
 		IEnumerable<object> ResolveMany(Type serviceType, object serviceKey = null);
+
+		/// <summary>
+		/// Retrive factories with type and key<br/>
+		/// Return empty sequence if no service registered<br/>
+		/// 根据服务类型和服务键获取工厂函数<br/>
+		/// 如果无注册的服务则返回空列表<br/>
+		/// </summary>
+		/// <param name="serviceType">Service type</param>
+		/// <param name="serviceKey">Service key</param>
+		/// <returns></returns>
+		IEnumerable<ContainerFactoryData> ResolveFactories(
+			Type serviceType, object serviceKey = null);
 	}
 }

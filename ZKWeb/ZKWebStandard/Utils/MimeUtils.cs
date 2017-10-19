@@ -5,13 +5,15 @@ using ZKWebStandard.Extensions;
 
 namespace ZKWebStandard.Utils {
 	/// <summary>
-	/// MIME类型的工具类
+	/// Mime utility functions<br/>
+	/// Mime类型的工具函数<br/>
 	/// </summary>
 	public static class MimeUtils {
 		/// <summary>
-		/// 后缀名到MIME类型的索引
+		/// Mime mapping<br/>
+		/// Mime类型<br/>
 		/// </summary>
-		private static IDictionary<string, string> MimeMapping =
+		public static readonly IDictionary<string, string> MimeMapping =
 			new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
 				{".323", "text/h323"},
 				{".3g2", "video/3gpp2"},
@@ -576,10 +578,17 @@ namespace ZKWebStandard.Utils {
 			};
 
 		/// <summary>
-		/// 根据文件后缀获取MIME类型
+		/// Get mime type from file extension<br/>
+		/// 根据文件后缀获取Mime类型<br/>
 		/// </summary>
-		/// <param name="filename">文件名</param>
+		/// <param name="filename">File name</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// MimeUtils.GetMimeType("1.html") == "text/html"
+		/// MimeUtils.GetMimeType("1.vbs") == "text/vbscript"
+		/// </code>
+		/// </example>
 		public static string GetMimeType(string filename) {
 			var extension = Path.GetExtension(filename);
 			var mime = MimeMapping.GetOrDefault(extension);

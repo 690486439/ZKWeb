@@ -1,11 +1,12 @@
 ﻿using ZKWebStandard.Utils;
 using ZKWebStandard.Testing;
 
-namespace ZKWebStandard.Tests.Functions {
+namespace ZKWebStandard.Tests.Utils {
 	[Tests]
 	class RegexUtilsTest {
 		public void Email() {
 			Assert.IsTrue(RegexUtils.Validators.Email.IsMatch("a@b.c"));
+			Assert.IsTrue(RegexUtils.Validators.Email.IsMatch("a@b.c.x"));
 			Assert.IsTrue(!RegexUtils.Validators.Email.IsMatch("a@bc"));
 			Assert.IsTrue(!RegexUtils.Validators.Email.IsMatch("ab.c"));
 		}

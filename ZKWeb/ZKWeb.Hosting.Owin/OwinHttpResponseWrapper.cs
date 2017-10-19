@@ -1,18 +1,22 @@
 ﻿using Microsoft.Owin;
+using System.Diagnostics;
 using System.IO;
 using ZKWebStandard.Web;
 
 namespace ZKWeb.Hosting.Owin {
 	/// <summary>
-	/// 包装Owin的Http回应
+	/// Http response wrapper for Owin<br/>
+	/// Owin的Http回应的包装类<br/>
 	/// </summary>
 	internal class OwinHttpResponseWrapper : IHttpResponse {
 		/// <summary>
-		/// 所属的Http上下文
+		/// Parent http context<br/>
+		/// 所属的Http上下文<br/>
 		/// </summary>
 		protected OwinHttpContextWrapper ParentContext { get; set; }
 		/// <summary>
-		/// Owin的Http回应
+		/// Original http response<br/>
+		/// 原始的Http回应<br/>
 		/// </summary>
 		protected IOwinResponse OwinResponse { get; set; }
 
@@ -55,21 +59,24 @@ namespace ZKWeb.Hosting.Owin {
 			OwinResponse.Headers.Add(key, new[] { value });
 		}
 		public void Redirect(string url, bool permanent) {
-			// Owin不支持永久跳转，这里自己写Http头
+			// Owin not support permanent direct
+			// Just write the header manually
 			OwinResponse.Headers.Add("Location", new[] { url });
 			OwinResponse.StatusCode = permanent ? 301 : 302;
 			End();
 		}
+		[DebuggerNonUserCode]
 		public void End() {
 			Body.Flush();
 			throw new OwinHttpResponseEndException();
 		}
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
-		/// <param name="parentContext">所属的Http上下文</param>
-		/// <param name="owinResponse">Owin的Http回应</param>
+		/// <param name="parentContext">Parent http context</param>
+		/// <param name="owinResponse">Original http response</param>
 		public OwinHttpResponseWrapper(
 			OwinHttpContextWrapper parentContext, IOwinResponse owinResponse) {
 			ParentContext = parentContext;

@@ -1,35 +1,50 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
+using ZKWeb.Server;
 
 namespace ZKWeb.Hosting.AspNet {
 	/// <summary>
-	/// Asp.Net全局处理器的基类
+	/// Base application class for Asp.Net<br/>
+	/// Asp.Net的基础应用类<br/>
 	/// </summary>
-	public abstract class GlobalBase : System.Web.HttpApplication {
+	public abstract class GlobalBase : GlobalBase<DefaultApplication> {
+
+	}
+
+	/// <summary>
+	/// Base application class for Asp.Net<br/>
+	/// Asp.Net的基础应用类<br/>
+	/// </summary>
+	/// <typeparam name="TApplication">Application type</typeparam>
+	public abstract class GlobalBase<TApplication> : System.Web.HttpApplication
+		where TApplication : IApplication, new() {
 		/// <summary>
-		/// 网站启动时的处理
+		/// On website start<br/>
+		/// 网站启动时的处理<br/>
 		/// </summary>
 		protected virtual void Application_Start(object sender, EventArgs e) {
+			ZKWeb.Application.Initialize<TApplication>(Server.MapPath("~/"));
 			ZKWeb.Application.Ioc.RegisterMany<AspNetWebsiteStopper>();
-			ZKWeb.Application.Initialize(Server.MapPath("~/"));
 		}
 
 		/// <summary>
-		/// 处理Http请求
+		/// On http request<br/>
+		/// 收到Http请求时的处理<br/>
 		/// </summary>
+		[DebuggerNonUserCode]
 		protected virtual void Application_BeginRequest(object sender, EventArgs e) {
 			var context = new AspNetHttpContextWrapper(Context);
 			try {
-				// 处理请求
+				// Handle http request
 				ZKWeb.Application.OnRequest(context);
 			} catch (ThreadAbortException) {
-				// 正常处理完毕
-				// 这里需要throw的原因
-				// - IIS抛出的线程终止错误是包装的类型，表示请求结束
-				// - 如果让运行库抛出原本的例外会导致IIS认为不是请求结束而是程序结束
+				// Success
+				// Throw the original exception
+				// Attention: original exception is a iis wrapped thread abort exception
 				throw;
 			} catch (Exception ex) {
-				// 处理错误
+				// Error
 				ZKWeb.Application.OnError(context, ex);
 			}
 		}

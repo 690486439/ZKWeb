@@ -1,7 +1,5 @@
-﻿#if !NETCORE
-using System.IO;
-using ZKWeb.Templating;
-using ZKWeb.Tests.Server;
+﻿using ZKWeb.Templating;
+using ZKWeb.Tests.Storage;
 using ZKWeb.Web.ActionResults;
 using ZKWebStandard.Ioc;
 using ZKWebStandard.Testing;
@@ -21,17 +19,16 @@ namespace ZKWeb.Tests.Web.ActionResults {
 				var contextMock = new HttpContextMock();
 				result.WriteResponse(contextMock.response);
 				Assert.Equals(contextMock.response.StatusCode, 200);
-				Assert.Equals(contextMock.response.ContentType, "text/html");
+				Assert.Equals(contextMock.response.ContentType, result.ContentType);
 				Assert.Equals(contextMock.response.GetContentsFromBody(), "test a asd");
 
 				result = new TemplateResult("__test_b.html", new { name = "asd" });
 				contextMock = new HttpContextMock();
 				result.WriteResponse(contextMock.response);
 				Assert.Equals(contextMock.response.StatusCode, 200);
-				Assert.Equals(contextMock.response.ContentType, "text/html");
+				Assert.Equals(contextMock.response.ContentType, result.ContentType);
 				Assert.Equals(contextMock.response.GetContentsFromBody(), "test b asd");
 			}
 		}
 	}
 }
-#endif

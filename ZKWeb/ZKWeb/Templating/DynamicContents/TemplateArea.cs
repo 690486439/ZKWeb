@@ -2,22 +2,29 @@
 
 namespace ZKWeb.Templating.DynamicContents {
 	/// <summary>
-	/// 模板区域
+	/// Template area<br/>
+	/// 模板区域<br/>
 	/// </summary>
+	/// <seealso cref="TemplateWidget"/>
+	/// <seealso cref="TemplateWidgetInfo"/>
+	/// <seealso cref="TemplateAreaManager"/>
 	public class TemplateArea {
 		/// <summary>
-		/// 区域Id
+		/// Area Id<br/>
+		/// 区域Id<br/>
 		/// </summary>
 		public string Id { get; set; }
 		/// <summary>
-		/// 默认的模块列表
+		/// Default widgets<br/>
+		/// 该区域下的默认模块列表<br/>
 		/// </summary>
 		public IList<TemplateWidget> DefaultWidgets { get; set; }
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
-		/// <param name="id"></param>
+		/// <param name="id">Area id</param>
 		public TemplateArea(string id) {
 			Id = id;
 			DefaultWidgets = new List<TemplateWidget>();

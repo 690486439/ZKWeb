@@ -2,13 +2,16 @@
 
 namespace ZKWebStandard.Testing {
 	/// <summary>
-	/// 断言失败抛出的例外
+	/// Assert failed exception<br/>
+	/// 断言失败的例外<br/>
 	/// </summary>
+	/// <seealso cref="Assert"/>
 	public class AssertException : Exception {
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
-		/// <param name="reason">失败原因</param>
+		/// <param name="reason">The reason</param>
 		public AssertException(string reason) : base(reason) { }
 	}
 }

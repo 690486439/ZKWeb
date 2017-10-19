@@ -5,17 +5,25 @@ using System.Security.Cryptography;
 
 namespace ZKWebStandard.Utils {
 	/// <summary>
-	/// 随机工具类
+	/// Random utility functions<br/>
+	/// 随机的工具函数<br/>
 	/// </summary>
 	public static class RandomUtils {
 		/// <summary>
-		/// 随机数生成器
+		/// Random generator<br/>
+		/// 全局使用的随机数生成器<br/>
 		/// </summary>
 		public static Random Generator { get; } = new Random(SystemRandomInt());
 
 		/// <summary>
-		/// 生成真正随机的二进制数据
+		/// Create secure random bytes in given length<br/>
+		/// 获取安全的指定长度的随机内容<br/>
 		/// </summary>
+		/// <example>
+		/// <code language="cs">
+		/// var bytes = RandomUtils.SystemRandomBytes(20);
+		/// </code>
+		/// </example>
 		public static byte[] SystemRandomBytes(int length) {
 			byte[] buffer = new byte[length];
 			using (var rng = RandomNumberGenerator.Create()) {
@@ -25,28 +33,46 @@ namespace ZKWebStandard.Utils {
 		}
 
 		/// <summary>
-		/// 生成真正随机的整数
+		/// Create secure random integer<br/>
+		/// 获取安全的随机数值<br/>
 		/// </summary>
+		/// <example>
+		/// <code language="cs">
+		/// var value = RandomUtils.SystemRandomInt();
+		/// </code>
+		/// </example>
 		public static int SystemRandomInt() {
 			return BitConverter.ToInt32(SystemRandomBytes(4), 0);
 		}
 
 		/// <summary>
-		/// 生成随机数值
+		/// Create random integer<br/>
+		/// 获取随机数值<br/>
 		/// </summary>
-		/// <param name="minValue">最小值</param>
-		/// <param name="maxValue">最大值</param>
+		/// <param name="minValue">Min value, inclusive</param>
+		/// <param name="maxValue">Max value, exclusive</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var value = RandomUtils.RandomInt(0, 100);
+		/// </code>
+		/// </example>
 		public static int RandomInt(int minValue, int maxValue) {
 			return Generator.Next(minValue, maxValue);
 		}
 
 		/// <summary>
-		/// 从列表中随机选择一个元素
+		/// Randomly select a value from collection<br/>
+		/// 从集合获取随机的元素<br/>
 		/// </summary>
-		/// <typeparam name="T">元素类型</typeparam>
-		/// <param name="values">元素列表</param>
+		/// <typeparam name="T">Type</typeparam>
+		/// <param name="values">Values</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var selection = RandomUtils.RandomSelection(options);
+		/// </code>
+		/// </example>
 		public static T RandomSelection<T>(IList<T> values) {
 			if (!values.Any()) {
 				return default(T);
@@ -55,11 +81,18 @@ namespace ZKWebStandard.Utils {
 		}
 
 		/// <summary>
-		/// 生成随机枚举值
-		/// 除非是空枚举，否则不会选择没有定义的值
+		/// Randonly select a enum value from enum type<br/>
+		/// If enum type is empty, then return 0<br/>
+		/// 从枚举获取随机的值<br/>
+		/// 如果枚举不包含任何值则返回0<br/>
 		/// </summary>
-		/// <typeparam name="TEnum">枚举类型</typeparam>
+		/// <typeparam name="TEnum">Enum type</typeparam>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var value = RandomUtils.RandomEnum&lt;TestEnum&gt;();
+		/// </code>
+		/// </example>
 		public static TEnum RandomEnum<TEnum>()
 			where TEnum : struct, IConvertible {
 			var values = Enum.GetValues(typeof(TEnum)).OfType<TEnum>().ToList();
@@ -67,11 +100,17 @@ namespace ZKWebStandard.Utils {
 		}
 
 		/// <summary>
-		/// 生成随机字符串
+		/// Generate random string in given length<br/>
+		/// 生成指定长度的随机字符串<br/>
 		/// </summary>
-		/// <param name="length">字符串长度</param>
-		/// <param name="chars">包含的字符，默认是a-zA-Z0-9</param>
+		/// <param name="length">String length</param>
+		/// <param name="chars">With chars, default is a-zA-Z0-9</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var str = RandomUtils.RandomString(20);
+		/// </code>
+		/// </example>
 		public static string RandomString(int length,
 			string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") {
 			var buffer = new char[length];

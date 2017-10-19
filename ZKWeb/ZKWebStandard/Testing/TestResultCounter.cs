@@ -1,23 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace ZKWebStandard.Testing {
+﻿namespace ZKWebStandard.Testing {
 	/// <summary>
-	/// 测试结果的计数器
+	/// Test result counter<br/>
+	/// 测试结果计数器<br/>
 	/// </summary>
+	/// <seealso cref="TestRunner"/>
 	public class TestResultCounter {
 		/// <summary>
-		/// 成功的测试数量
+		/// The number of tests passed<br/>
+		/// 通过的测试数量<br/>
 		/// </summary>
 		public ulong Passed { get; set; }
 		/// <summary>
-		/// 失败的测试数量
+		/// The number of tests failed<br/>
+		/// 失败的测试数量<br/>
 		/// </summary>
 		public ulong Failed { get; set; }
 		/// <summary>
-		/// 跳过的测试数量
+		/// The number of tests skipped<br/>
+		/// 跳过的测试数量<br/>
 		/// </summary>
 		public ulong Skipped { get; set; }
 	}

@@ -1,21 +1,34 @@
 ﻿using System;
 using System.IO;
-using System.Reflection;
 
 namespace ZKWebStandard.Utils {
 	/// <summary>
-	/// 路径工具类
+	/// Path utility functions<br/>
+	/// 路径的工具函数<br/>
 	/// </summary>
 	public static class PathUtils {
 		/// <summary>
-		/// 安全的组合路径列表
-		/// 检查参数是否为空或包含..
+		/// Secure path combining<br/>
+		/// Throw exception if any part contains ".." or other invalid value<br/>
+		/// 安全的合并路径<br/>
+		/// 如果路径中有..或其他不合法的值则抛出例外<br/>
 		/// </summary>
-		/// <param name="paths">路径列表</param>
+		/// <param name="paths">Path parts</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// PathUtils.SecureCombine("a", "b", "c") == Path.Combine("a", "b", "c")
+		/// PathUtils.SecureCombine("a", "/b", "c") throws exception
+		/// PathUtils.SecureCombine("a", "\\b", "c") throws exception
+		/// PathUtils.SecureCombine("a", "", "c") throws exception
+		/// PathUtils.SecureCombine("a", "..", "c") throws exception
+		/// PathUtils.SecureCombine("a/../b", "c") throws exception
+		/// </code>
+		/// </example>
 		public static string SecureCombine(params string[] paths) {
-			foreach (var path in paths) {
-				if (path.StartsWith("/")) {
+			for (var i = 0; i < paths.Length; ++i) {
+				var path = paths[i];
+				if (i > 0 && path.StartsWith("/")) {
 					throw new ArgumentException($"path startswith '/'");
 				} else if (path.StartsWith("\\")) {
 					throw new ArgumentException($"path startswith '\'");
@@ -29,9 +42,16 @@ namespace ZKWebStandard.Utils {
 		}
 
 		/// <summary>
-		/// 检查路径的上一级路径是否存在，不存在时创建
+		/// Ensure parent directories are exist<br/>
+		/// 确保路径的上级文件夹存在<br/>
 		/// </summary>
-		/// <param name="path">路径</param>
+		/// <param name="path">Path</param>
+		/// <example>
+		/// <code language="cs">
+		/// PathUtils.EnsureParentDirectory("c:\abc\123.txt");
+		/// // will create c:\abc if not exist
+		/// </code>
+		/// </example>
 		public static void EnsureParentDirectory(string path) {
 			var parentDirectory = Path.GetDirectoryName(path);
 			if (!Directory.Exists(parentDirectory)) {

@@ -1,6 +1,5 @@
-﻿#if !NETCORE
-using System;
-using System.Drawing;
+﻿using System;
+using System.DrawingCore;
 using System.IO;
 using ZKWebStandard.Extensions;
 using ZKWebStandard.Testing;
@@ -10,7 +9,6 @@ namespace ZKWebStandard.Tests.Extensions {
 	class ImageExtensionsTest {
 		public void Resize() {
 			using (var image = new Bitmap(3, 2)) {
-				// 设置图片像素
 				// blue, black, red
 				// red, blue, black
 				image.SetPixel(0, 0, Color.Blue);
@@ -60,7 +58,9 @@ namespace ZKWebStandard.Tests.Extensions {
 		public void SaveJpeg() {
 			using (var image = new Bitmap(3, 2)) {
 				var path = Path.GetTempFileName();
+#pragma warning disable CS0618
 				image.SaveJpeg(path, 100);
+#pragma warning restore CS0618
 				var fileInfo = new FileInfo(path);
 				Assert.IsTrueWith(fileInfo.Length > 0, fileInfo);
 				File.Delete(path);
@@ -70,7 +70,9 @@ namespace ZKWebStandard.Tests.Extensions {
 		public void SaveIcon() {
 			using (var image = new Bitmap(3, 2)) {
 				var path = Path.GetTempFileName();
+#pragma warning disable CS0618
 				image.SaveIcon(path);
+#pragma warning restore CS0618
 				var fileInfo = new FileInfo(path);
 				Assert.IsTrueWith(fileInfo.Length > 0, fileInfo);
 				File.Delete(path);
@@ -87,9 +89,8 @@ namespace ZKWebStandard.Tests.Extensions {
 
 				path = Path.GetTempFileName() + ".unknown";
 				Assert.Throws<NotSupportedException>(() => image.SaveAuto(path, 100));
-				Assert.IsTrue(!File.Exists(path));
+				File.Delete(path);
 			}
 		}
 	}
 }
-#endif

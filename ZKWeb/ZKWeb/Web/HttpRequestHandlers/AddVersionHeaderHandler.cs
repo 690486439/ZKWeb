@@ -1,13 +1,15 @@
-﻿using ZKWeb.Web;
-using ZKWebStandard.Web;
+﻿using ZKWebStandard.Web;
 
 namespace ZKWeb.Web.HttpRequestHandlers {
 	/// <summary>
-	/// 添加版本头信息到回应
+	/// Add zkweb version header to http response<br/>
+	/// 添加ZKWeb版本标识到Http回应<br/>
 	/// </summary>
+	/// <seealso cref="IHttpRequestPreHandler"/>
 	public class AddVersionHeaderHandler : IHttpRequestPreHandler {
 		/// <summary>
-		/// 处理请求
+		/// Handle request<br/>
+		/// 处理请求<br/>
 		/// </summary>
 		public void OnRequest() {
 			var response = HttpManager.CurrentContext.Response;

@@ -5,7 +5,8 @@ using ZKWebStandard.Collections;
 
 namespace ZKWebStandard.Web.Wrappers {
 	/// <summary>
-	/// Http请求的包装类
+	/// Http request wrapper base class<br/>
+	/// Http请求包装类的基类<br/>
 	/// </summary>
 	public abstract class HttpRequestWrapper : IHttpRequest {
 #pragma warning disable CS1591
@@ -50,6 +51,9 @@ namespace ZKWebStandard.Web.Wrappers {
 		public virtual string Scheme {
 			get { return OriginalRequest.Scheme; }
 		}
+		public virtual IDictionary<string, object> CustomParameters {
+			get { return OriginalRequest.CustomParameters; }
+		}
 		public virtual string GetCookie(string key) {
 			return OriginalRequest.GetCookie(key);
 		}
@@ -80,14 +84,10 @@ namespace ZKWebStandard.Web.Wrappers {
 		public virtual IEnumerable<Pair<string, IHttpPostedFile>> GetPostedFiles() {
 			return OriginalRequest.GetPostedFiles();
 		}
-#pragma warning restore CS1591
 
-		/// <summary>
-		/// 初始化
-		/// </summary>
-		/// <param name="originalRequest">原始的Http请求</param>
 		public HttpRequestWrapper(IHttpRequest originalRequest) {
 			OriginalRequest = originalRequest;
 		}
+#pragma warning restore CS1591
 	}
 }

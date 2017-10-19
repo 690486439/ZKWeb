@@ -1,6 +1,4 @@
-﻿#if !NETCORE
-using DotLiquid.Exceptions;
-using NSubstitute;
+﻿using DotLiquid.Exceptions;
 using System.Collections.Generic;
 using ZKWeb.Logging;
 using ZKWeb.Server;
@@ -8,22 +6,32 @@ using ZKWeb.Web.HttpRequestHandlers;
 using ZKWebStandard.Testing;
 using ZKWebStandard.Web;
 using ZKWebStandard.Web.Mock;
+using System.Runtime.CompilerServices;
 
 namespace ZKWeb.Tests.Web.HttpRequestHandlers {
 	[Tests]
 	class DefaultErrorHandlerTest {
+		private class TestLogManager : LogManager {
+			internal bool receivedLogError = false;
+
+			public override void LogError(
+				string message, string memberName, string filePath, int lineNumber) {
+				receivedLogError = true;
+			}
+		}
+
 		public void OnRequest() {
 			var handler = new DefaultErrorHandler();
 			using (Application.OverrideIoc()) {
-				var logManagerMock = Substitute.For<LogManager>();
+				var logManagerMock = new TestLogManager();
 				var config = new WebsiteConfig() { Extra = new Dictionary<string, object>() };
-				var configManagerMock = Substitute.For<ConfigManager>();
-				configManagerMock.WebsiteConfig.Returns(config);
+				var configManagerMock = new WebsiteConfigManager();
+				configManagerMock.WebsiteConfig = config;
 				Application.Ioc.Unregister<LogManager>();
-				Application.Ioc.RegisterInstance(logManagerMock);
-				Application.Ioc.Unregister<ConfigManager>();
-				Application.Ioc.RegisterInstance(configManagerMock);
-				// Ajax请求时只显示消息
+				Application.Ioc.RegisterInstance<LogManager>(logManagerMock);
+				Application.Ioc.Unregister<WebsiteConfigManager>();
+				Application.Ioc.RegisterInstance<WebsiteConfigManager>(configManagerMock);
+				// Only return message if error occurs with ajax request
 				using (HttpManager.OverrideContext("", "GET")) {
 					var request = (HttpRequestMock)HttpManager.CurrentContext.Request;
 					var response = (HttpResponseMock)HttpManager.CurrentContext.Response;
@@ -31,7 +39,7 @@ namespace ZKWeb.Tests.Web.HttpRequestHandlers {
 					handler.OnError(new ArgumentException("some message"));
 					Assert.Equals(response.GetContentsFromBody(), "some message");
 				}
-				// HttpException时显示状态代码和消息
+				// Display status and message if the error is HttpException
 				using (HttpManager.OverrideContext("", "GET")) {
 					var request = (HttpRequestMock)HttpManager.CurrentContext.Request;
 					var response = (HttpResponseMock)HttpManager.CurrentContext.Response;
@@ -40,7 +48,7 @@ namespace ZKWeb.Tests.Web.HttpRequestHandlers {
 					Assert.IsTrueWith(
 						contents.Contains("404 wrong address") && !contents.Contains("<pre>"), contents);
 				}
-				// 根据网站配置决定是否显示完整信息
+				// Display full exception dependent on website configuration
 				config.Extra[ExtraConfigKeys.DisplayFullExceptionForRequest] = true;
 				using (HttpManager.OverrideContext("", "GET")) {
 					var request = (HttpRequestMock)HttpManager.CurrentContext.Request;
@@ -59,23 +67,22 @@ namespace ZKWeb.Tests.Web.HttpRequestHandlers {
 					Assert.IsTrueWith(
 						contents.Contains("500 some error") && !contents.Contains("<pre>"), contents);
 				}
-				// 测试记录日志
-				logManagerMock.ClearReceivedCalls();
+				// Test error logging
+				logManagerMock.receivedLogError = false;
 				using (HttpManager.OverrideContext("", "GET")) {
 					var request = (HttpRequestMock)HttpManager.CurrentContext.Request;
 					var response = (HttpResponseMock)HttpManager.CurrentContext.Response;
 					handler.OnError(new HttpException(401, "user error"));
-					logManagerMock.DidNotReceiveWithAnyArgs().LogError(null);
+					Assert.IsTrue(!logManagerMock.receivedLogError);
 				}
-				logManagerMock.ClearReceivedCalls();
+				logManagerMock.receivedLogError = false;
 				using (HttpManager.OverrideContext("", "GET")) {
 					var request = (HttpRequestMock)HttpManager.CurrentContext.Request;
 					var response = (HttpResponseMock)HttpManager.CurrentContext.Response;
 					handler.OnError(new HttpException(500, "server error"));
-					logManagerMock.ReceivedWithAnyArgs().LogError(null);
+					Assert.IsTrue(logManagerMock.receivedLogError);
 				}
 			}
 		}
 	}
 }
-#endif

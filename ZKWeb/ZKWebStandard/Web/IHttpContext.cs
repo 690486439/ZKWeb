@@ -2,19 +2,23 @@
 
 namespace ZKWebStandard.Web {
 	/// <summary>
-	/// Http上下文的接口
+	/// Interface for http context<br/>
+	/// Http上下文的接口<br/>
 	/// </summary>
 	public interface IHttpContext {
 		/// <summary>
-		/// 对应的请求
+		/// Http request<br/>
+		/// Http请求<br/>
 		/// </summary>
 		IHttpRequest Request { get; }
 		/// <summary>
-		/// 对应的回应
+		/// Http response<br/>
+		/// Http回应<br/>
 		/// </summary>
 		IHttpResponse Response { get; }
 		/// <summary>
-		/// 同一上下文中共享的对象
+		/// Http context bound items<br/>
+		/// 绑定到上下文的对象集合<br/>
 		/// </summary>
 		IDictionary<object, object> Items { get; }
 	}

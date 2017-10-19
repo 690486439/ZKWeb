@@ -5,28 +5,42 @@ using ZKWebStandard.Web;
 
 namespace ZKWebStandard.Extensions {
 	/// <summary>
-	/// Http上下文的接口的扩展函数
+	/// IHttpContext extension methods<br/>
+	/// Http上下文的扩展函数<br/>
 	/// </summary>
 	public static class IHttpContextExtensions {
 		/// <summary>
-		/// 储存上下文中通用的数据
+		/// Put associated data to http context<br/>
+		/// 插入Http上下文的关联数据<br/>
 		/// </summary>
-		/// <typeparam name="T">数据类型</typeparam>
-		/// <param name="context">Http上下文</param>
-		/// <param name="key">键名</param>
-		/// <param name="data">数据</param>
+		/// <typeparam name="T">Data type</typeparam>
+		/// <param name="context">Http context</param>
+		/// <param name="key">Key</param>
+		/// <param name="data">Data</param>
+		/// <example>
+		/// <code language="cs">
+		/// var list = new string[] { "a", "b", "c" };
+		/// HttpManager.CurrentContext.PutData("TestPutData", list);
+		/// </code>
+		/// </example>
 		public static void PutData<T>(this IHttpContext context, string key, T data) {
 			context.Items[key] = data;
 		}
 
 		/// <summary>
-		/// 获取上下文中通用的数据
+		/// Get associated data from http context<br/>
+		/// 获取Http上下文的关联数据<br/>
 		/// </summary>
-		/// <typeparam name="T">数据类型</typeparam>
-		/// <param name="context">Http上下文</param>
-		/// <param name="key">键名</param>
-		/// <param name="defaultValue">获取不到时返回的默认值</param>
+		/// <typeparam name="T">Data type</typeparam>
+		/// <param name="context">Http context</param>
+		/// <param name="key">Key</param>
+		/// <param name="defaultValue">The default value</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var result = HttpManager.CurrentContext.GetData&lt;string[]&gt;("TestPutData");
+		/// </code>
+		/// </example>
 		public static T GetData<T>(
 			this IHttpContext context, string key, T defaultValue = default(T)) {
 			var obj = context.Items.GetOrDefault(key);
@@ -37,13 +51,19 @@ namespace ZKWebStandard.Extensions {
 		}
 
 		/// <summary>
-		/// 获取上下文中通用的数据，不存在时创建
+		/// Get associated data from http context, create it first if not exist<br/>
+		/// 获取Http上下文的关联数据, 如果不存在则创建<br/>
 		/// </summary>
-		/// <typeparam name="T">数据类型</typeparam>
-		/// <param name="context">Http上下文</param>
-		/// <param name="key">键名</param>
-		/// <param name="defaultCreater">获取不到时创建默认值使用的函数</param>
+		/// <typeparam name="T">Data type</typeparam>
+		/// <param name="context">Http context</param>
+		/// <param name="key">Key</param>
+		/// <param name="defaultCreater">Default value factory</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var result = HttpManager.CurrentContext.GetOrCreateData("TestCreateData", () =&gt; "def");
+		/// </code>
+		/// </example>
 		public static T GetOrCreateData<T>(
 			this IHttpContext context, string key, Func<T> defaultCreater) {
 			var value = context.GetData<T>(key);
@@ -55,74 +75,104 @@ namespace ZKWebStandard.Extensions {
 		}
 
 		/// <summary>
-		/// 删除上下文中通用的数据
+		/// Remove associated data from http context<br/>
+		/// 删除Http上下文的关联数据<br/>
 		/// </summary>
-		/// <param name="context">Http上下文</param>
-		/// <param name="key">键名</param>
+		/// <param name="context">Http context</param>
+		/// <param name="key">Key</param>
+		/// <example>
+		/// <code language="cs">
+		/// HttpManager.CurrentContext.RemoveData("TestRemoveData");
+		/// </code>
+		/// </example>
 		public static void RemoveData(
 			this IHttpContext context, string key) {
 			context.Items.Remove(key);
 		}
 
 		/// <summary>
-		/// 储存设置的Cookie值时使用的前缀
-		/// 如果在获取前设置了需要使用设置的值
+		/// Data key prefix for previous set cookie value<br/>
+		/// If we write a cookie value and read it later in the same http context,<br/>
+		/// we will need to know what value is wrote before<br/>
+		/// 设置Cookie时使用的关联键的前缀<br/>
+		/// 如果我们写了一个Cookie值然后又想在Http上下文结束前读取它,<br/>
+		/// 我们需要知道之前写入了什么值<br/>
 		/// </summary>
 		public const string SetCookieDataKeyPrefix = "__ZKWeb.SetCookie.";
 
 		/// <summary>
-		/// 获取上下文中的Cookie值
+		/// Get cookie value from http context<br/>
+		/// 获取Http上下文中的Cookie值<br/>
 		/// </summary>
-		/// <param name="context">Http上下文</param>
-		/// <param name="key">键值</param>
+		/// <param name="context">Http context</param>
+		/// <param name="key">Cookie key</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var cookie = HttpManager.CurrentContext.GetCookie("TestGetCookie");
+		/// </code>
+		/// </example>
 		public static string GetCookie(
 			this IHttpContext context, string key) {
-			// 如果在获取前设置了需要使用设置的值
+			// Check if this cookie is set before
+			// If so we need to use the previous value
 			var dataKey = SetCookieDataKeyPrefix + key;
 			var cookie = context.GetData<string>(dataKey);
 			if (cookie != null) {
 				return cookie;
 			}
-			// 从请求获取值
+			// Get cookie value from http request
 			cookie = context.Request.GetCookie(key);
 			return HttpUtils.UrlDecode(cookie);
 		}
 
 		/// <summary>
-		/// 设置上下文中的Cookie值
+		/// Put cookie value to http context<br/>
+		/// 设置Http上下文中的Cookie值<br/>
 		/// </summary>
-		/// <param name="context">Http上下文</param>
-		/// <param name="key">键名</param>
-		/// <param name="value">Cookie值</param>
-		/// <param name="options">使用的选项</param>
+		/// <param name="context">Http context</param>
+		/// <param name="key">Cookie key</param>
+		/// <param name="value">Cookie value</param>
+		/// <param name="options">Cookie options</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// HttpManager.CurrentContext.PutCookie("TestPutCookie", "abc");
+		/// </code>
+		/// </example>
 		public static void PutCookie(
 			this IHttpContext context, string key, string value, HttpCookieOptions options = null) {
-			// 储存到数据中
+			// Record the value to http context
 			var dataKey = SetCookieDataKeyPrefix + key;
 			context.PutData(dataKey, value);
-			// 设置Cookie值
+			// Set cookie value to http response
 			var cookie = HttpUtils.UrlEncode(value);
 			context.Response.SetCookie(key, cookie, options ?? new HttpCookieOptions());
 		}
 
 		/// <summary>
-		/// 删除上下文中的Cookie值
+		/// Remove cookie value<br/>
+		/// 删除Cookie值<br/>
 		/// </summary>
-		/// <param name="context">Http上下文</param>
-		/// <param name="key">键名</param>
+		/// <param name="context">Http context</param>
+		/// <param name="key">Cookie key</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code>
+		/// HttpManager.CurrentContext.RemoveCookie("TestRemoveCookie");
+		/// </code>
+		/// </example>
 		public static void RemoveCookie(this IHttpContext context, string key) {
 			var options = new HttpCookieOptions() { Expires = new DateTime(1970, 1, 1) };
 			context.PutCookie(key, "", options);
 		}
 
 		/// <summary>
-		/// 检测客户端的UserAgent是否移动端使用的正则表达式
-		/// 为了提升速度，不检测部分机型
-		/// 参考:
-		/// http://stackoverflow.com/questions/13086856/mobile-device-detection-in-asp-net
+		/// Determines client is visiting from mobile device<br/>
+		/// Ignore some device for performance<br/>
+		/// 检测客户端是否移动端设备<br/>
+		/// 为了性能忽略部分设备<br/>
+		/// See: http://stackoverflow.com/questions/13086856/mobile-device-detection-in-asp-net
 		/// </summary>
 		private static Regex MobileCheckRegex = new Regex(
 			@"android|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|" +
@@ -131,24 +181,33 @@ namespace ZKWebStandard.Extensions {
 			@"windows (ce|phone)|xda|xiino",
 			RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
 		/// <summary>
-		/// 储存当前请求使用设备的键名
-		/// 使用这个键保存到Cookies可以手动指定当前请求使用的设备
+		/// Client device key name, used for<br/>
+		/// - Cache the device type for performance<br/>
+		/// - Get from cookie if client want to provide a specified device type<br/>
+		/// 客户端设备的储存键, 用于<br/>
+		/// - 为了性能缓存检测出来的设备类型<br/>
+		/// - 从Cookie获取如果客户端想手动指定设备类型<br/>
 		/// </summary>
 		public const string DeviceKey = "ZKWeb.Device";
 
 		/// <summary>
-		/// 获取客户端的设备类型
-		/// 先从Cookies再从UserAgent获取
+		/// Get client device type<br/>
+		/// From Cache => Cookie => User-Agent<br/>
+		/// 获取客户端的设备类型<br/>
+		/// 顺序 缓存 => Cookie值 => User-Agent<br/>
 		/// </summary>
-		/// <param name="context">Http上下文</param>
+		/// <param name="context">Http context</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var device = HttpManager.CurrentContext.GetClientDevice();
+		/// </code>
+		/// </example>
 		public static DeviceTypes GetClientDevice(this IHttpContext context) {
-			// 从缓存获取
 			var device = context.GetData<object>(DeviceKey);
 			if (device != null) {
 				return (DeviceTypes)device;
 			}
-			// 先从Cookies再从UserAgent获取
 			var deviceFromCookies = context.GetCookie(DeviceKey);
 			if (!string.IsNullOrEmpty(deviceFromCookies)) {
 				device = deviceFromCookies.ConvertOrDefault<DeviceTypes>();
@@ -156,32 +215,41 @@ namespace ZKWebStandard.Extensions {
 				var userAgent = context.Request.GetUserAgent() ?? "";
 				device = MobileCheckRegex.IsMatch(userAgent) ? DeviceTypes.Mobile : DeviceTypes.Desktop;
 			}
-			// 保存到缓存并返回
 			context.PutData(DeviceKey, device);
 			return (DeviceTypes)device;
 		}
 
 		/// <summary>
-		/// 设置客户端的设备类型到Cookies中
-		/// 重新打开浏览器之前都不需要再设置
+		/// Set device type to cookies<br/>
+		/// Next time will use this value instead of the value detect from user agent<br/>
+		/// 设置客户端的设备类型<br/>
+		/// 下次请求将会使用这个值代替User-Agent中的值<br/>
 		/// </summary>
-		/// <param name="context">Http上下文</param>
-		/// <param name="type">设备类型</param>
+		/// <param name="context">Http ccontext</param>
+		/// <param name="type">Device type</param>
+		/// <example>
+		/// <code language="cs">
+		/// HttpManager.CurrentContext.SetClientDeviceToCookies(DeviceTypes.Desktop);
+		/// </code>
+		/// </example>
 		public static void SetClientDeviceToCookies(this IHttpContext context, DeviceTypes type) {
 			context.PutCookie(DeviceKey, type.ToString());
 		}
 	}
 
 	/// <summary>
-	/// 设备类型
+	/// Device type<br/>
+	/// 设备类型<br/>
 	/// </summary>
 	public enum DeviceTypes {
 		/// <summary>
-		/// 电脑
+		/// Desktop<br/>
+		/// PC端<br/>
 		/// </summary>
 		Desktop = 0,
 		/// <summary>
-		/// 手机或平板
+		/// Mobile<br/>
+		/// 移动端<br/>
 		/// </summary>
 		Mobile = 1
 	}

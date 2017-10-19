@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Threading;
 using ZKWeb.Cache;
 using ZKWeb.Server;
 using ZKWebStandard.Collections;
@@ -10,40 +9,56 @@ using ZKWebStandard.Extensions;
 
 namespace ZKWeb.Localize {
 	/// <summary>
-	/// 翻译管理器
+	/// Translate manager<br/>
+	/// 翻译管理器<br/>
 	/// </summary>
+	/// <seealso cref="T"/>
+	/// <seealso cref="ITranslateProvider"/>
+	/// <example>
+	/// <code language="cs">
+	/// var translateManager = Application.Ioc.Resolve&lt;TranslateManager&gt;();
+	/// var translated = translateManager.Translate("Original");
+	/// </code>
+	/// </example>
 	public class TranslateManager : ICacheCleaner {
 		/// <summary>
-		/// 翻译的缓存时间
-		/// 默认是3秒，可通过网站配置指定
+		/// Translated text cache time<br/>
+		/// Default is 3s, able to override from website configuration<br/>
+		/// 已翻译文本的缓存时间<br/>
+		/// 默认是15秒, 可以使用网站配置覆盖<br/>
 		/// </summary>
 		public TimeSpan TranslateCacheTime { get; set; }
 		/// <summary>
-		/// 翻译缓存
-		/// { (语言, 文本): 翻译, ... }
+		/// Translated text cache<br/>
+		/// { (Language, Orignal text): Translated text, ... }<br/>
+		/// 已翻译文本的缓存<br/>
 		/// </summary>
-		protected MemoryCache<Pair<string, string>, string> TranslateCache { get; set; }
+		protected IKeyValueCache<Pair<string, string>, string> TranslateCache { get; set; }
 		/// <summary>
-		/// 翻译提供器的缓存
-		/// { 语言: 提供器列表, ... }
+		/// Translate provider cache<br/>
+		/// { Language: Providers, ... }<br/>
+		/// 翻译提供器的缓存<br/>
 		/// </summary>
-		protected MemoryCache<string, List<ITranslateProvider>> TranslateProvidersCache { get; set; }
+		protected IKeyValueCache<string, List<ITranslateProvider>> TranslateProvidersCache { get; set; }
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
 		public TranslateManager() {
-			var configManager = Application.Ioc.Resolve<ConfigManager>();
+			var configManager = Application.Ioc.Resolve<WebsiteConfigManager>();
+			var cacheFactory = Application.Ioc.Resolve<ICacheFactory>();
 			TranslateCacheTime = TimeSpan.FromSeconds(
-				configManager.WebsiteConfig.Extra.GetOrDefault(ExtraConfigKeys.TranslateCacheTime, 3));
-			TranslateCache = new MemoryCache<Pair<string, string>, string>();
-			TranslateProvidersCache = new MemoryCache<string, List<ITranslateProvider>>();
+				configManager.WebsiteConfig.Extra.GetOrDefault(ExtraConfigKeys.TranslateCacheTime, 15));
+			TranslateCache = cacheFactory.CreateCache<Pair<string, string>, string>();
+			TranslateProvidersCache = cacheFactory.CreateCache<string, List<ITranslateProvider>>();
 		}
 
 		/// <summary>
-		/// 按当前语言翻译文本
+		/// Translate text into the language of the runtime environment<br/>
+		/// 翻译文本到运行环境中的语言<br/>
 		/// </summary>
-		/// <param name="text">文本</param>
+		/// <param name="text">Original text</param>
 		/// <returns></returns>
 		public virtual string Translate(string text) {
 			var cluture = CultureInfo.CurrentCulture;
@@ -51,22 +66,23 @@ namespace ZKWeb.Localize {
 		}
 
 		/// <summary>
-		/// 按指定的语言翻译文本
+		/// Translate text to the specified language<br/>
+		/// 翻译文本到指定的语言<br/>
 		/// </summary>
-		/// <param name="text">文本</param>
-		/// <param name="code">语言代码，格式是{语言}-{地区}</param>
+		/// <param name="text">Original text</param>
+		/// <param name="code">Language code, eg: zh-CN</param>
 		/// <returns></returns>
 		public virtual string Translate(string text, string code) {
-			// 文本是空白时不需要翻译
+			// If text is empty, no needs to translate
 			if (string.IsNullOrEmpty(text)) {
 				return "";
 			}
-			// 从缓存获取
+			// Get translated text from cache
 			return TranslateCache.GetOrCreate(Pair.Create(code, text), () => {
-				// 获取翻译提供器列表
+				// Get translate providers
 				var providers = GetTranslateProviders(code);
-				// 翻译文本并保存到缓存
-				// 没有找到翻译时使用原文本
+				// Translate text and store to cache
+				// If no provider is able to translate, then return the original text
 				foreach (var provider in providers) {
 					var translated = provider.Translate(text);
 					if (translated != null) {
@@ -78,9 +94,10 @@ namespace ZKWeb.Localize {
 		}
 
 		/// <summary>
-		/// 获取指定语言的翻译提供器列表
+		/// Get translate providers for the given language<br/>
+		/// 获取指定语言的翻译提供器列表<br/>
 		/// </summary>
-		/// <param name="code">格式是{语言}-{地区}</param>
+		/// <param name="code">Language code, eg: zh-CN</param>
 		/// <returns></returns>
 		public virtual List<ITranslateProvider> GetTranslateProviders(string code) {
 			return TranslateProvidersCache.GetOrCreate(code, () => {
@@ -91,7 +108,8 @@ namespace ZKWeb.Localize {
 		}
 
 		/// <summary>
-		/// 清理缓存
+		/// Clear cache<br/>
+		/// 清理缓存<br/>
 		/// </summary>
 		public virtual void ClearCache() {
 			TranslateCache.Clear();

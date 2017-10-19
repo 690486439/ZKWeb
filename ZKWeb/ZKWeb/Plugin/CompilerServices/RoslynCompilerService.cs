@@ -6,14 +6,19 @@ using System.Linq;
 using ZKWeb.Plugin.AssemblyLoaders;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text;
+using ZKWebStandard.Utils;
+using System.FastReflection;
+using System.Reflection;
 
 namespace ZKWeb.Plugin.CompilerServices {
 	/// <summary>
-	/// roslyn编译服务
+	/// Roslyn compiler service<br/>
+	/// 基于Roslyn的编译服务<br/>
 	/// </summary>
 	internal class RoslynCompilerService : ICompilerService {
 		/// <summary>
-		/// 编译到的平台名称
+		/// Target platform name, net or netstandard<br/>
+		/// 目标平台的名称, net或netstandard<br/>
 		/// </summary>
 #if NETCORE
 		public string TargetPlatform { get { return "netstandard"; } }
@@ -21,33 +26,38 @@ namespace ZKWeb.Plugin.CompilerServices {
 		public string TargetPlatform { get { return "net"; } }
 #endif
 		/// <summary>
-		/// 已载入的命名空间的集合
-		/// 用于减少重复载入的时间
+		/// Loaded namespaces, for reducing load time<br/>
+		/// 已加载的命名空间, 用于减少加载时间<br/>
 		/// </summary>
 		protected HashSet<string> LoadedNamespaces { get; set; }
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
 		public RoslynCompilerService() {
 			LoadedNamespaces = new HashSet<string>();
 		}
 
 		/// <summary>
-		/// 找出所有using，并尝试加载里面的程序集
+		/// Find all using directive<br/>
+		/// And try to load the namespace as assembly<br/>
+		/// 寻找源代码中的所有using指令<br/>
+		/// 并尝试加载命名空间对应的程序集<br/>
 		/// </summary>
-		/// <param name="syntaxTrees">语法树列表</param>
+		/// <param name="syntaxTrees">Syntax trees</param>
 		protected void LoadAssembliesFromUsings(IList<SyntaxTree> syntaxTrees) {
-			// 从语法树找出所有using
-			// 例如"System.Threading"会查找出"System"和"System.Threading"
+			// Find all using directive
 			var assemblyLoader = Application.Ioc.Resolve<IAssemblyLoader>();
 			foreach (var tree in syntaxTrees) {
 				foreach (var usingSyntax in ((CompilationUnitSyntax)tree.GetRoot()).Usings) {
 					var name = usingSyntax.Name;
 					var names = new List<string>();
 					while (name != null) {
-						// 只有单个名称时是"IdentifierNameSyntax"
-						// 有多个名称(X.X)时是"QualifiedNameSyntax"
+						// The type is "IdentifierNameSyntax" if it's single identifier
+						// eg: System
+						// The type is "QualifiedNameSyntax" if it's contains more than one identifier
+						// eg: System.Threading
 						if (name is QualifiedNameSyntax) {
 							var qualifiedName = (QualifiedNameSyntax)name;
 							var identifierName = (IdentifierNameSyntax)qualifiedName.Right;
@@ -60,12 +70,13 @@ namespace ZKWeb.Plugin.CompilerServices {
 						}
 					}
 					if (names.Contains("src")) {
-						// 跳过插件的命名空间
+						// Ignore if it looks like a namespace from plugin 
 						continue;
 					}
 					names.Reverse();
 					for (int c = 1; c <= names.Count; ++c) {
-						// 尝试把命名空间当成是程序集载入
+						// Try to load the namespace as assembly
+						// eg: will try "System" and "System.Threading" from "System.Threading"
 						var usingName = string.Join(".", names.Take(c));
 						if (LoadedNamespaces.Contains(usingName)) {
 							continue;
@@ -81,41 +92,66 @@ namespace ZKWeb.Plugin.CompilerServices {
 		}
 
 		/// <summary>
-		/// 编译源代码到程序集
+		/// Compile source files to assembly<br/>
+		/// 编译源代码到程序集<br/>
 		/// </summary>
 		public void Compile(IList<string> sourceFiles,
 			string assemblyName, string assemblyPath, CompilationOptions options) {
-			// 不指定选项时使用默认选项
+			// Use default options if `options` is null
 			options = options ?? new CompilationOptions();
-			// 解析源代码文件
+			// Parse source files into syntax trees
+			// Also define NETCORE for .Net Core
+			var parseOptions = CSharpParseOptions.Default;
+#if NETCORE
+			parseOptions = parseOptions.WithPreprocessorSymbols("NETCORE");
+#endif
 			var syntaxTrees = sourceFiles
 				.Select(path => CSharpSyntaxTree.ParseText(
-					File.ReadAllText(path), path: path, encoding: Encoding.UTF8))
+					File.ReadAllText(path), parseOptions, path, Encoding.UTF8))
 				.ToList();
-			// 找出所有using，并尝试加载里面的程序集
+			// Find all using directive and load the namespace as assembly
+			// It's for resolve assembly dependencies of plugin
 			LoadAssembliesFromUsings(syntaxTrees);
-			// 引用当前载入的程序集和选项中指定的程序集
+			// Add loaded assemblies to compile references
 			var assemblyLoader = Application.Ioc.Resolve<IAssemblyLoader>();
 			var references = assemblyLoader.GetLoadedAssemblies()
 				.Select(assembly => assembly.Location)
 				.Select(path => MetadataReference.CreateFromFile(path))
 				.ToList();
-			// 设置编译参数
-			var optimizationLevel = (options.Debug ?
-				OptimizationLevel.Debug : OptimizationLevel.Release);
+			// Set roslyn compilation options
+			// Generate pdb file only supported on windows,
+			// because Microsoft.DiaSymReader.Native only have windows runtimes
+			if (!PlatformUtils.RunningOnWindows()) {
+				options.GeneratePdbFile = false;
+			}
+			var optimizationLevel = (options.Release ?
+				OptimizationLevel.Release : OptimizationLevel.Debug);
 			var pdbPath = ((!options.GeneratePdbFile) ? null : Path.Combine(
 				Path.GetDirectoryName(assemblyPath),
 				Path.GetFileNameWithoutExtension(assemblyPath) + ".pdb"));
-			// 编译到程序集，出错时抛出例外
+			// Create compilation options and set IgnoreCorLibraryDuplicatedTypes flag
+			// To avoid error like The type 'Path' exists in both
+			// 'System.Runtime.Extensions, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'
+			// and
+			// 'System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e'
+			var compilationOptions = new CSharpCompilationOptions(
+				OutputKind.DynamicallyLinkedLibrary,
+				optimizationLevel: optimizationLevel);
+			var withTopLevelBinderFlagsMethod = compilationOptions.GetType()
+				.FastGetMethod("WithTopLevelBinderFlags", BindingFlags.Instance | BindingFlags.NonPublic);
+			var binderFlagsType = withTopLevelBinderFlagsMethod.GetParameters()[0].ParameterType;
+			compilationOptions = (CSharpCompilationOptions)withTopLevelBinderFlagsMethod.FastInvoke(
+				compilationOptions,
+				binderFlagsType.GetField("IgnoreCorLibraryDuplicatedTypes").GetValue(binderFlagsType));
+			// Compile to assembly, throw exception if error occurred
 			var compilation = CSharpCompilation.Create(assemblyName)
-				.WithOptions(new CSharpCompilationOptions(
-					OutputKind.DynamicallyLinkedLibrary,
-					optimizationLevel: optimizationLevel))
+				.WithOptions(compilationOptions)
 				.AddReferences(references)
 				.AddSyntaxTrees(syntaxTrees);
 			var emitResult = compilation.Emit(assemblyPath, pdbPath);
 			if (!emitResult.Success) {
-				throw new CompilationException(string.Join("\r\n", emitResult.Diagnostics));
+				throw new CompilationException(string.Join("\r\n",
+					emitResult.Diagnostics.Where(d => d.WarningLevel == 0)));
 			}
 		}
 	}

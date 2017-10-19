@@ -1,7 +1,6 @@
-﻿#if !NETCORE
-using DotLiquid;
+﻿using DotLiquid;
 using ZKWeb.Templating.DynamicContents;
-using ZKWeb.Tests.Server;
+using ZKWeb.Tests.Storage;
 using ZKWebStandard.Ioc;
 using ZKWebStandard.Testing;
 using ZKWebStandard.Web;
@@ -53,4 +52,3 @@ namespace ZKWeb.Tests.Templating.DynamicContents {
 		}
 	}
 }
-#endif

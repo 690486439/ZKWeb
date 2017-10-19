@@ -1,0 +1,58 @@
+﻿### 2.0 Release Note
+
+### Changes
+
+- Update framework
+	- update netstandard 1.6 to netstandard 2.0
+	- update netcoreapp1.1 to netcoreapp2.0
+- Update packages
+	- Microsoft.AspNetCore.Hosting.Abstractions 2.0.0
+	- Microsoft.AspNetCore.Http.Abstractions 2.0.0
+	- Microsoft.Extensions.DependencyInjection 2.0.0
+	- Microsoft.Extensions.DependencyInjection.Abstractions 2.0.0
+	- Microsoft.Extensions.DependencyModel 2.0.0
+	- Microsoft.Data.Sqlite 2.0.0
+	- Npgsql 3.2.5
+	- Microsoft.EntityFrameworkCore 2.0.0
+	- Microsoft.EntityFrameworkCore.Design 2.0.0
+	- Microsoft.EntityFrameworkCore.InMemory 2.0.0
+	- Microsoft.EntityFrameworkCore.Sqlite 2.0.0
+	- Microsoft.EntityFrameworkCore.SqlServer 2.0.0
+	- Npgsql.EntityFrameworkCore.PostgreSQL 2.0.0
+	- Pomelo.EntityFrameworkCore.MySql 2.0.0
+	- MongoDB.Driver 2.4.4
+	- ZKWeb.Repack.SQLite 1.0.104
+	- Microsoft.CSharp 4.4.0
+	- Microsoft.CodeAnalysis.CSharp 2.3.0
+	- Newtonsoft.Json 10.0.3
+	- ZKWeb.Fork.DotLiquid 2.3.0
+	- ZKWeb.Fork.FastReflection 2.3.0
+	- Dommel 1.9.0
+	- Dapper.FluentMap 1.6.0
+	- Dapper.FluentMap.Dommel 1.5.0
+	- Remove NSubstitute dependency
+- Improve IoC container
+	- Support scoped reuse
+	- Support register Implement<> to Service<>
+	- Support register services from IServiceCollection
+	- Provider IServiceProvider adapter
+	- Change constructor determine rule
+		- First, use constructor marked with InjectAttribute
+		- Second, use the only public constructor
+		- Third, use runtime resolver IMultiConstructorResolver, if not exist then throw exception
+	- Change constructor injection rule
+		- Support Func<T>
+		- Support Lazy<T>
+		- Support List<T>, ICollection<T>, IEnumerable<T>
+		- Support Lazy<List<T>>, Func<List<T>> and so on
+		- If parameter has default value, use IfUnresolved.ReturnDefault, otherwise use IfUnresolved.Throw
+- Use IServiceProvider adapted from zkweb on Asp.Net Core by default
+	- Asp.Net Core and ZKWeb can use services from each other now
+- Improve controller and router
+	- Respect controller reuse type in container, prior to this version controllers are treat as singleton
+	- Allow override request parameters by setting IHttpRequest.CustomParameters
+	- Support url parameter such as "get/{id}"
+- Improve ORM
+	- Support construct context factory with custom entity types for secondary database
+	- Add EFCoreDatabaseContextPool
+	- Evict entities when flush failed for NHibernate

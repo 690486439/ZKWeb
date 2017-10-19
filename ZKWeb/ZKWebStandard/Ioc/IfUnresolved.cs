@@ -1,14 +1,21 @@
 ﻿namespace ZKWebStandard.Ioc {
 	/// <summary>
-	/// 解决失败时的处理
+	/// Action when service unresolved<br/>
+	/// 服务解决失败时的操作<br/>
 	/// </summary>
+	/// <seealso cref="IContainer"/>
+	/// <seealso cref="Container"/>
 	public enum IfUnresolved {
 		/// <summary>
-		/// 抛出例外
+		/// Throw exception<br/>
+		/// It's the default behaviour<br/>
+		/// 抛出例外<br/>
+		/// 它是默认的操作<br/>
 		/// </summary>
 		Throw = 0,
 		/// <summary>
-		/// 返回默认值
+		/// Return default value<br/>
+		/// 返回默认值<br/>
 		/// </summary>
 		ReturnDefault = 1
 	}

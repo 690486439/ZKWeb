@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Version>2.0.0</Version>
+		<TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
+		<AssemblyName>ZKWeb.Console</AssemblyName>
+		<OutputType>Exe</OutputType>
+		<PackageId>ZKWeb.Console</PackageId>
+		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+		<GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="App_Data\**\*.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ZKWeb\ZKWeb.csproj" />
+		<ProjectReference Include="..\ZKWeb.ORM.Dapper\ZKWeb.ORM.Dapper.csproj" />
+		<ProjectReference Include="..\ZKWeb.ORM.EFCore\ZKWeb.ORM.EFCore.csproj" />
+		<ProjectReference Include="..\ZKWeb.ORM.InMemory\ZKWeb.ORM.InMemory.csproj" />
+		<ProjectReference Include="..\ZKWeb.ORM.MongoDB\ZKWeb.ORM.MongoDB.csproj" />
+		<ProjectReference Include="..\ZKWebStandard\ZKWebStandard.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
+		<ProjectReference Include="..\ZKWeb.ORM.NHibernate\ZKWeb.ORM.NHibernate.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+		<PackageReference Include="NSubstitute" Version="2.0.3" />
+	</ItemGroup>
+
+	<PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
+		<DefineConstants>$(DefineConstants);NETCORE</DefineConstants>
+	</PropertyGroup>
+</Project>

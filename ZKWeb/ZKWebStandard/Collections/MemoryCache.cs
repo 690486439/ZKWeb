@@ -5,33 +5,48 @@ using System.Threading;
 
 namespace ZKWebStandard.Collections {
 	/// <summary>
-	/// 缓存类，支持指定过期时间，线程安全
+	/// Key-value cache based on memory<br/>
+	/// 基于内存的键值缓存<br/>
 	/// </summary>
-	/// <typeparam name="TKey">键类型</typeparam>
-	/// <typeparam name="TValue">值类型</typeparam>
-	public class MemoryCache<TKey, TValue> {
+	/// <typeparam name="TKey">Key type</typeparam>
+	/// <typeparam name="TValue">Value type</typeparam>
+	/// <seealso cref="IKeyValueCache{TKey, TValue}"/>
+	/// <example>
+	/// var cache = new MemoryCache&lt;int, string&gt;();
+	/// cache.Put(1, "value of 1", TimeSpan.FromSeconds(100));
+	/// 
+	/// string cached;
+	/// if (cache.TryGetValue(1, out cached)) {
+	///		Console.WriteLine("cache hit: " + cached);
+	/// }
+	/// </example>
+	public class MemoryCache<TKey, TValue> : IKeyValueCache<TKey, TValue> {
 		/// <summary>
-		/// 定期删除过期数据的间隔时间
-		/// 默认180秒
+		/// Check interval for revoke expired values<br/>
+		/// 删除已过期值的检查间隔<br/>
+		/// Default is 180s
 		/// </summary>
 		public TimeSpan RevokeExpiresInterval { get; set; }
 		/// <summary>
-		/// 缓存数据
-		/// 结构 { 键, (对象, 过期时间) }
-		/// 使用了线程锁所以这里只需要普通的Dictionary
+		/// Cache<br/>
+		/// 缓存词典<br/>
+		/// { Key: (Value, ExpireTime) }
 		/// </summary>
 		protected IDictionary<TKey, Pair<TValue, DateTime>> Cache { get; set; }
 		/// <summary>
-		/// 缓存数据的线程锁
+		/// Reader writer lock<br/>
+		/// 读写锁<br/>
 		/// </summary>
 		protected ReaderWriterLockSlim CacheLock { get; set; }
 		/// <summary>
-		/// 最后一次删除过期缓存的时间
+		/// Last check time<br/>
+		/// 上次检查的时间<br/>
 		/// </summary>
 		protected DateTime LastRevokeExpires { get; set; }
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
 		public MemoryCache() {
 			RevokeExpiresInterval = TimeSpan.FromSeconds(180);
@@ -41,8 +56,8 @@ namespace ZKWebStandard.Collections {
 		}
 
 		/// <summary>
-		/// 删除过期的缓存数据
-		/// 固定每180秒一次
+		/// Revoke expired values if the check interval has elapsed<br/>
+		/// 删除已过期的值如果检查间隔已到<br/>
 		/// </summary>
 		protected void RevokeExpires() {
 			var now = DateTime.UtcNow;
@@ -65,11 +80,12 @@ namespace ZKWebStandard.Collections {
 		}
 
 		/// <summary>
-		/// 设置缓存数据
+		/// Put value to cache<br/>
+		/// 插入值到缓存中<br/>
 		/// </summary>
-		/// <param name="key">缓存键</param>
-		/// <param name="value">缓存值</param>
-		/// <param name="keepTime">保留时间</param>
+		/// <param name="key">Cache key</param>
+		/// <param name="value">Cache value</param>
+		/// <param name="keepTime">Keep time</param>
 		public void Put(TKey key, TValue value, TimeSpan keepTime) {
 			RevokeExpires();
 			if (keepTime == TimeSpan.Zero) {
@@ -85,11 +101,13 @@ namespace ZKWebStandard.Collections {
 		}
 
 		/// <summary>
-		/// 获取缓存数据
-		/// 没有或已过期时返回false
+		/// Try to get cached value<br/>
+		/// Return false if no exist value or exist value expired<br/>
+		/// 尝试获取已缓存的值<br/>
+		/// 如果值不存在或已过期则返回false<br/>
 		/// </summary>
-		/// <param name="key">缓存键</param>
-		/// <param name="value">缓存值</param>
+		/// <param name="key">Cache key</param>
+		/// <param name="value">Cache value</param>
 		/// <returns></returns>
 		public bool TryGetValue(TKey key, out TValue value) {
 			RevokeExpires();
@@ -110,42 +128,10 @@ namespace ZKWebStandard.Collections {
 		}
 
 		/// <summary>
-		/// 获取缓存数据
-		/// 没有或已过期时返回默认值
+		/// Remove cached value<br/>
+		/// 删除已缓存的值<br/>
 		/// </summary>
-		/// <param name="key">缓存键</param>
-		/// <param name="defaultValue">默认值</param>
-		/// <returns></returns>
-		public TValue GetOrDefault(TKey key, TValue defaultValue = default(TValue)) {
-			TValue value;
-			if (TryGetValue(key, out value)) {
-				return value;
-			}
-			return defaultValue;
-		}
-
-		/// <summary>
-		/// 获取缓存数据
-		/// 没有或已过期时创建并返回
-		/// 注意获取和创建整体不是原子的
-		/// </summary>
-		/// <param name="key">缓存</param>
-		/// <param name="creator">创建函数</param>
-		/// <param name="keepTime">保留时间</param>
-		/// <returns></returns>
-		public TValue GetOrCreate(TKey key, Func<TValue> creator, TimeSpan keepTime) {
-			TValue value;
-			if (keepTime == TimeSpan.Zero || !TryGetValue(key, out value)) {
-				value = creator();
-				Put(key, value, keepTime);
-			}
-			return value;
-		}
-
-		/// <summary>
-		/// 删除缓存数据
-		/// </summary>
-		/// <param name="key">缓存键</param>
+		/// <param name="key">Cache key</param>
 		public void Remove(TKey key) {
 			RevokeExpires();
 			CacheLock.EnterWriteLock();
@@ -157,7 +143,8 @@ namespace ZKWebStandard.Collections {
 		}
 
 		/// <summary>
-		/// 返回在缓存中的对象数量
+		/// Count all cached values<br/>
+		/// 获取已缓存的值数量<br/>
 		/// </summary>
 		/// <returns></returns>
 		public int Count() {
@@ -170,7 +157,8 @@ namespace ZKWebStandard.Collections {
 		}
 
 		/// <summary>
-		/// 清空缓存数据
+		/// Clear all cached values<br/>
+		/// 删除所有已缓存的值<br/>
 		/// </summary>
 		public void Clear() {
 			CacheLock.EnterWriteLock();

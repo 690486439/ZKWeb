@@ -5,38 +5,56 @@ using System.Linq;
 
 namespace ZKWeb.Server {
 	/// <summary>
-	/// 网站配置
+	/// Website configuration<br/>
+	/// 网站配置<br/>
 	/// </summary>
 	public class WebsiteConfig {
 		/// <summary>
-		/// 使用的数据库
-		/// 可以指定这些值
-		/// postgresql, sqlite, mysql, mssql
+		/// Object relational mapper<br/>
+		/// It will load the mapper assembly named "ZKWeb.ORM.{thisValue}"<br/>
+		/// eg: NHibernate, InMemory<br/>
+		/// ORM的名称<br/>
+		/// 它会加载名称为"ZKWeb.ORM.{ORM名称}"的程序集<br/>
+		/// 例如: NHibernate, InMemory<br/>
+		/// </summary>
+		public string ORM { get; set; }
+		/// <summary>
+		/// Database name<br/>
+		/// eg: PostgreSQL, SQLite, MySQL, MSSQL, MongoDB<br/>
+		/// 数据库名称<br/>
+		/// 例如: PostgreSQL, SQLite, MySQL, MSSQL, MongoDB<br/>
 		/// </summary>
 		public string Database { get; set; }
 		/// <summary>
-		/// 数据库的链接字符串
+		/// Database connection string<br/>
+		/// 数据库连接字符串<br/>
 		/// </summary>
 		public string ConnectionString { get; set; }
 		/// <summary>
-		/// 插件目录列表
-		/// 必须是相对于网站程序的路径
-		/// 如果没有指定则使用"App_Data/Plugins"
+		/// Directories use to find plugins<br/>
+		/// It should be a relative path to website root<br/>
+		/// If not specified "App_Data/Plugins" will be used<br/>
+		/// 用于查找插件的目录列表<br/>
+		/// 它应该基于网站根目录的相对路径<br/>
+		/// 如果不指定则使用"App_Data/Plugins"<br/>
 		/// </summary>
 		public IList<string> PluginDirectories { get; set; }
 		/// <summary>
-		/// 使用的插件列表
+		/// Plugin names in the loading order<br/>
+		/// 插件名称列表, 以加载顺序排列<br/>
 		/// </summary>
 		public IList<string> Plugins { get; set; }
 		/// <summary>
-		/// 其他附加配置
+		/// Other extra configuration<br/>
+		/// 其他附加配置<br/>
 		/// </summary>
 		public IDictionary<string, object> Extra { get; set; }
 
 		/// <summary>
-		/// 从文件读取网站配置
+		/// Read website configuration from path<br/>
+		/// 从指定路径读取网站配置<br/>
 		/// </summary>
-		/// <param name="path"></param>
+		/// <param name="path">Configuration path</param>
 		/// <returns></returns>
 		public static WebsiteConfig FromFile(string path) {
 			var json = File.ReadAllText(path);

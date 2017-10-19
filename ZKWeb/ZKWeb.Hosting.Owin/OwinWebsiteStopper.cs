@@ -3,14 +3,17 @@ using ZKWeb.Web;
 
 namespace ZKWeb.Hosting.Owin {
 	/// <summary>
-	/// 停止Owin网站的运行
+	/// Owin website stopper<br/>
+	/// Owin的网站停止器<br/>
 	/// </summary>
 	public class OwinWebsiteStopper : IWebsiteStopper {
 		/// <summary>
-		/// 停止网站运行
+		/// Unload app domain<br/>
+		/// 卸载AppDomain<br/>
 		/// </summary>
 		public void StopWebsite() {
-			// Owin没有提供统一的接口停止网站，这里通过卸载程序域停止
+			// Owin didn't provide interface for stopping website
+			// Just use same method from Asp.Net
 			HttpRuntime.UnloadAppDomain();
 		}
 	}

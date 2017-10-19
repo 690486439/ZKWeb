@@ -5,51 +5,90 @@ using ZKWebStandard.Extensions;
 
 namespace ZKWebStandard.Utils {
 	/// <summary>
-	/// Http工具类
+	/// Http utility functions<br/>
+	/// Http的工具函数<br/>
 	/// </summary>
 	public static class HttpUtils {
 		/// <summary>
-		/// Url编码
+		/// Url encode<br/>
+		/// 编码到Url<br/>
 		/// </summary>
-		/// <param name="value">字符串值</param>
+		/// <param name="value">Original value</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// HttpUtils.UrlEncode("'&amp;^%=abc") == "%27%26%5E%25%3Dabc"
+		/// </code>
+		/// </example>
 		public static string UrlEncode(object value) {
 			return WebUtility.UrlEncode(value?.ToString() ?? "");
 		}
 
 		/// <summary>
-		/// Url解码
+		/// Url decode<br/>
+		/// 从Url解码<br/>
 		/// </summary>
-		/// <param name="value">字符串值</param>
+		/// <param name="value">Original value</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// HttpUtils.UrlDecode("%27%26%5E%25%3Dabc") == "'&amp;^%=abc"
+		/// </code>
+		/// </example>
 		public static string UrlDecode(string value) {
 			return WebUtility.UrlDecode(value ?? "");
 		}
 
 		/// <summary>
-		/// Html编码
+		/// Html encode<br/>
+		/// 编码到Html<br/>
 		/// </summary>
-		/// <param name="value">字符串值</param>
+		/// <param name="value">Original value</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// HttpUtils.HtmlEncode("asd'\"&lt;&gt;") == "asd&amp;#39;&amp;quot;&amp;lt;&amp;gt;"
+		/// </code>
+		/// </example>
 		public static string HtmlEncode(object value) {
 			return WebUtility.HtmlEncode(value?.ToString() ?? "");
 		}
 
 		/// <summary>
-		/// Html解码
+		/// Html decode<br/>
+		/// 从Html解码<br/>
 		/// </summary>
-		/// <param name="value">字符串值</param>
+		/// <param name="value">Original value</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// HttpUtils.HtmlDecode("asd&amp;#39;&amp;quot;&amp;lt;&amp;gt;"), "asd'\"&lt;&gt;"
+		/// </code>
+		/// </example>
 		public static string HtmlDecode(string value) {
 			return WebUtility.HtmlDecode(value ?? "");
 		}
 
 		/// <summary>
-		/// 分割路径和请求字符串
+		/// Split path and query string<br/>
+		/// 分割路径和查询字符串<br/>
 		/// </summary>
-		/// <param name="pathAndQuery">路径和请求字符串</param>
-		/// <param name="path">路径</param>
-		/// <param name="queryString">请求字符串</param>
+		/// <param name="pathAndQuery">Path an query string</param>
+		/// <param name="path">Path</param>
+		/// <param name="queryString">Query string</param>
+		/// <example>
+		/// <code language="cs">
+		/// string path;
+		/// string query;
+		/// HttpUtils.SplitPathAndQuery("test", out path, out query);
+		/// // path == "test"
+		/// // query == ""
+		/// 
+		/// HttpUtils.SplitPathAndQuery("test?a=1&amp;b=2", out path, out query);
+		/// // path == "test"
+		/// // query == "?a=1&amp;b=2"
+		/// </code>
+		/// </example>
 		public static void SplitPathAndQuery(
 			string pathAndQuery, out string path, out string queryString) {
 			var queryIndex = pathAndQuery.IndexOf('?');
@@ -58,19 +97,31 @@ namespace ZKWebStandard.Utils {
 		}
 
 		/// <summary>
-		/// 解析请求字符串
+		/// Parse query string<br/>
+		/// 解析查询字符串<br/>
 		/// </summary>
-		/// <param name="queryString">请求字符串</param>
+		/// <param name="queryString">Query string</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var result = HttpUtils.ParseQueryString("a=1&amp;b=2&amp;key=%27%26%5E%25%3Dabc");
+		/// result.Count == 3
+		/// result["a"].Count == 1
+		/// result["a"][0] == "1"
+		/// result["b"].Count == 1
+		/// result["b"][0] == "2"
+		/// result["key"].Count == 1
+		/// result["key"][0] == "'&amp;^%=abc"
+		/// </code>
+		/// </example>
 		public static IDictionary<string, IList<string>> ParseQueryString(string queryString) {
 			var result = new Dictionary<string, IList<string>>();
-			// 空白时不需要解析
 			if (string.IsNullOrEmpty(queryString)) {
 				return result;
 			}
-			// 以?开始时跳过这个字符
+			// Trim beginning `?`
 			var startIndex = (queryString[0] == '?') ? 1 : 0;
-			// 获取所有键值
+			// Find all keys and values
 			while (startIndex < queryString.Length) {
 				var equalIndex = queryString.IndexOf('=', startIndex);
 				if (equalIndex < 0) {
@@ -91,10 +142,19 @@ namespace ZKWebStandard.Utils {
 		}
 
 		/// <summary>
-		/// 构建请求字符串
+		/// Build query string<br/>
+		/// 构建查询字符串<br/>
 		/// </summary>
-		/// <param name="queryParams">请求参数</param>
+		/// <param name="queryParams">Query arguments</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var query = new Dictionary&lt;string, IList&lt;string&gt;&gt;();
+		/// query["name"] = new[] { "john", "harold" };
+		/// query["age"] = new[] { "50&amp;51" };
+		/// // result == "name=john&amp;name=harold&amp;age=50%2651"
+		/// </code>
+		/// </example>
 		public static string BuildQueryString(IDictionary<string, IList<string>> queryParams) {
 			var queryString = new StringBuilder();
 			var isFirst = true;

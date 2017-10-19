@@ -1,43 +1,68 @@
 ﻿using ZKWeb.Templating;
-using ZKWeb.Web;
 using ZKWebStandard.Web;
 
 namespace ZKWeb.Web.ActionResults {
 	/// <summary>
-	/// 模板结果
+	/// Render template to response<br/>
+	/// 描画模板到回应<br/>
 	/// </summary>
+	/// <seealso cref="ControllerManager"/>
+	/// <seealso cref="IController"/>
+	/// <example>
+	/// <code language="cs">
+	/// public ExampleController : IController {
+	///		[Action("example")]
+	///		public IActionResult Example() {
+	///			return new TemplateResult("index.html", new { a = 123 });
+	///		}
+	///	}
+	/// </code>
+	/// </example>
 	public class TemplateResult : IActionResult {
 		/// <summary>
-		/// 模板路径
-		/// 这里的路径是虚拟路径
-		/// 例如"test/test.html"或"Common.Base:test/test.html"
+		/// Template path<br/>
+		/// Eg: "test/test.html", "Common.Base:test/test.html"<br/>
+		/// 模板路径<br/>
+		/// 例如: "test/test.html", "Common.Base:test/test.html"<br/>
 		/// </summary>
 		public string TemplatePath { get; set; }
 		/// <summary>
-		/// 传给模板的参数
-		/// 可以是匿名对象或IDictionary(string, object)
+		/// Template arguments<br/>
+		/// Can be anonymous object or IDictionary&lt;string, object&gt;<br/>
+		/// 模板参数<br/>
+		/// 可以是匿名对象或者IDictionary&lt;string, object&gt;<br/>
 		/// </summary>
 		public object TemplateArgument { get; set; }
+		/// <summary>
+		/// Content Type<br/>
+		/// Default is "text/html; charset=utf-8"<br/>
+		/// 内容类型<br/>
+		/// 默认是 "text/html; charset=utf-8"<br/>
+		/// </summary>
+		public string ContentType { get; set; }
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
-		/// <param name="path">模板路径，参考TemplatePath成员的注释</param>
-		/// <param name="argument">传给模板的参数，参考TemplateArgument成员的注释</param>
+		/// <param name="path">Template path</param>
+		/// <param name="argument">Template arguments</param>
 		public TemplateResult(string path, object argument = null) {
 			TemplatePath = path;
 			TemplateArgument = argument;
+			ContentType = "text/html; charset=utf-8";
 		}
 
 		/// <summary>
-		/// 描画模板到Http回应
+		/// Render template to http response<br/>
+		/// 描画模板到http回应<br/>
 		/// </summary>
-		/// <param name="response">Http回应</param>
+		/// <param name="response">Http response</param>
 		public void WriteResponse(IHttpResponse response) {
-			// 设置状态代码和内容类型
+			// Set status and mime
 			response.StatusCode = 200;
-			response.ContentType = "text/html";
-			// 描画模板到Http回应
+			response.ContentType = ContentType;
+			// Render template to http response
 			var templateManager = Application.Ioc.Resolve<TemplateManager>();
 			templateManager.RenderTemplate(TemplatePath, TemplateArgument, response.Body);
 			response.Body.Flush();

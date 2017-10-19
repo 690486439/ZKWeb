@@ -4,17 +4,21 @@ using System.IO;
 
 namespace ZKWeb.Templating.TemplateTags {
 	/// <summary>
-	/// 显示当前的页面语言代号
+	/// Display the language code<br/>
+	/// 显示当前语言代码<br/>
+	/// <br/>
 	/// </summary>
+	/// <seealso cref="TemplateManager"/>
 	/// <example>
-	/// html lang="{% html_lang %}"
+	/// <code>
+	/// &lt;html lang="{% html_lang %}"&gt;&lt;/html&gt;
+	/// </code>
 	/// </example>
 	public class HtmlLang : Tag {
 		/// <summary>
-		/// 描画内容
+		/// Render contents<br/>
+		/// 描画内容<br/>
 		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="result"></param>
 		public override void Render(Context context, TextWriter result) {
 			result.Write(CultureInfo.CurrentCulture.Name);
 		}

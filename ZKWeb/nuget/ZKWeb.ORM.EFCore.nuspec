@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package>
+	<metadata>
+		<id>ZKWeb.ORM.EFCore</id>
+		<version>2.0.2</version>
+		<title>ZKWeb.ORM.EFCore</title>
+		<authors>303248153</authors>
+		<owners>303248153</owners>
+		<description>Support use EntityFramework Core in ZKWeb. For more information please visit project site.</description>
+		<summary>Support use EntityFramework Core in ZKWeb. For more information please visit project site.</summary>
+		<language>en-US</language>
+		<projectUrl>https://github.com/zkweb-framework/ZKWeb</projectUrl>
+		<licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
+		<requireLicenseAcceptance>true</requireLicenseAcceptance>
+		<tags></tags>
+		<dependencies>
+			<dependency id="ZKWeb" version="2.0.0" />
+			<dependency id="Microsoft.EntityFrameworkCore" version="2.0.0" />
+			<dependency id="Microsoft.EntityFrameworkCore.Design" version="2.0.0" />
+			<dependency id="Microsoft.EntityFrameworkCore.InMemory" version="2.0.0" />
+			<dependency id="Microsoft.EntityFrameworkCore.Sqlite" version="2.0.0" />
+			<dependency id="Microsoft.EntityFrameworkCore.SqlServer" version="2.0.0" />
+			<dependency id="Npgsql.EntityFrameworkCore.PostgreSQL" version="2.0.0" />
+			<dependency id="Pomelo.EntityFrameworkCore.MySql" version="2.0.0" />
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="..\..\LICENSE.txt" target="." />
+		<file src="..\ZKWeb.ORM.EFCore\bin\Release\net461\ZKWeb.ORM.EFCore.dll" target="lib\net461" />
+		<file src="..\ZKWeb.ORM.EFCore\bin\Release\net461\ZKWeb.ORM.EFCore.xml" target="lib\net461" />
+		<file src="..\ZKWeb.ORM.EFCore\bin\Release\net461\ZKWeb.ORM.EFCore.pdb" target="lib\net461" />
+		<file src="..\ZKWeb.ORM.EFCore\bin\Release\netstandard2.0\ZKWeb.ORM.EFCore.dll" target="lib\netstandard2.0" />
+		<file src="..\ZKWeb.ORM.EFCore\bin\Release\netstandard2.0\ZKWeb.ORM.EFCore.xml" target="lib\netstandard2.0" />
+		<file src="..\ZKWeb.ORM.EFCore\bin\Release\netstandard2.0\ZKWeb.ORM.EFCore.pdb" target="lib\netstandard2.0" />
+	</files>
+</package>

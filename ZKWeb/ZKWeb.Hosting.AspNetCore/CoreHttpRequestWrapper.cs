@@ -8,21 +8,27 @@ using System;
 
 namespace ZKWeb.Hosting.AspNetCore {
 	/// <summary>
-	/// 包装AspNetCore的Http请求
+	/// Http request wrapper for Asp.net Core<br/>
+	/// Asp.net Core的Http请求包装类<br/>
 	/// </summary>
 	internal class CoreHttpRequestWrapper : IHttpRequest {
 		/// <summary>
-		/// 所属的Http上下文
+		/// Parent http context<br/>
+		/// 所属的Http上下文<br/>
 		/// </summary>
 		protected CoreHttpContextWrapper ParentContext { get; set; }
 		/// <summary>
-		/// AspNetCore的Http请求
+		/// Original http request<br/>
+		/// 原始的Http请求<br/>
 		/// </summary>
 		protected HttpRequest CoreRequest { get; set; }
 		/// <summary>
-		/// 当前请求是否可以获取表单内容
-		/// AspNetCore必须进行事先检查
-		/// 构建时还没接收到ContentType，所以不能在构建时检查
+		/// Detect request contains form values<br/>
+		/// It's necessary for Asp.Net Core<br/>
+		/// And because ContentType ain't arrived when construct, it should be a lazy value<br/>
+		/// 检测请求是否包含表单值<br/>
+		/// Asp.Net Core需要这项检查<br/>
+		/// 并且因为构建这个实例时ContentType尚未收到, 它应该是一个懒值<br/>
 		/// </summary>
 		protected Lazy<bool> ContainsFormValues { get; set; }
 
@@ -65,6 +71,7 @@ namespace ZKWeb.Hosting.AspNetCore {
 		public int RemotePort {
 			get { return ParentContext.Connection.RemotePort; }
 		}
+		public IDictionary<string, object> CustomParameters { get; }
 
 		public string GetCookie(string key) {
 			return CoreRequest.Cookies[key];
@@ -130,10 +137,11 @@ namespace ZKWeb.Hosting.AspNetCore {
 		}
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
-		/// <param name="parentContext">所属的Http上下文</param>
-		/// <param name="coreRequest">AspNetCore的Http请求</param>
+		/// <param name="parentContext">Parent context</param>
+		/// <param name="coreRequest">Original http request</param>
 		public CoreHttpRequestWrapper(
 			CoreHttpContextWrapper parentContext, HttpRequest coreRequest) {
 			ParentContext = parentContext;
@@ -143,6 +151,7 @@ namespace ZKWeb.Hosting.AspNetCore {
 				return (contentType == "application/x-www-form-urlencoded" ||
 					contentType == "multipart/form-data");
 			});
+			CustomParameters = new Dictionary<string, object>();
 		}
 	}
 }

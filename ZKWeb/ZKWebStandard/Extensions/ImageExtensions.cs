@@ -1,31 +1,37 @@
-﻿#if !NETCORE
-using System;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
+﻿using System;
+using System.DrawingCore;
+using System.DrawingCore.Drawing2D;
+using System.DrawingCore.Imaging;
 using System.IO;
 using System.Linq;
 using ZKWebStandard.Utils;
 
 namespace ZKWebStandard.Extensions {
 	/// <summary>
-	/// 图片的扩展函数
+	/// Image extension methods<br/>
+	/// 图片的扩展函数<br/>
 	/// </summary>
 	public static class ImageExtensions {
 		/// <summary>
-		/// 缩放图片
+		/// Resize image<br/>
+		/// 改变图片大小<br/>
 		/// </summary>
-		/// <param name="image">原图片</param>
-		/// <param name="width">宽度</param>
-		/// <param name="height">高度</param>
-		/// <param name="mode">缩放模式</param>
-		/// <param name="background">背景颜色，默认是透明</param>
+		/// <param name="image">Original image</param>
+		/// <param name="width">Width</param>
+		/// <param name="height">Height</param>
+		/// <param name="mode">Resize mode</param>
+		/// <param name="background">Background, default is transparent</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// var newImage = oldImage.Resize(100, 100, ImageResizeMode.Fixed);
+		/// </code>
+		/// </example>
 		public static Image Resize(this Image image,
 			int width, int height, ImageResizeMode mode, Color? background = null) {
 			var src = new Rectangle(0, 0, image.Width, image.Height);
 			var dst = new Rectangle(0, 0, width, height);
-			// 根据模式调整缩放到的大小和位置
+			// Calculate destination rectangle by resize mode
 			if (mode == ImageResizeMode.Fixed) {
 			} else if (mode == ImageResizeMode.ByWidth) {
 				height = (int)((decimal)src.Height / src.Width * dst.Width);
@@ -36,111 +42,182 @@ namespace ZKWebStandard.Extensions {
 			} else if (mode == ImageResizeMode.Cut) {
 				if ((decimal)src.Width / src.Height > (decimal)dst.Width / dst.Height) {
 					src.Width = (int)((decimal)dst.Width / dst.Height * src.Height);
-					src.X = (image.Width - src.Width) / 2; // 切除原图片左右
+					src.X = (image.Width - src.Width) / 2; // Cut left and right
 				} else {
 					src.Height = (int)((decimal)dst.Height / dst.Width * src.Width);
-					src.Y = (image.Height - src.Height) / 2; // 切除原图片上下
+					src.Y = (image.Height - src.Height) / 2; // Cut top and bottom
 				}
 			} else if (mode == ImageResizeMode.Padding) {
 				if ((decimal)src.Width / src.Height > (decimal)dst.Width / dst.Height) {
 					dst.Height = (int)((decimal)src.Height / src.Width * dst.Width);
-					dst.Y = (height - dst.Height) / 2; // 扩展原图片左右
+					dst.Y = (height - dst.Height) / 2; // Padding left and right
 				} else {
 					dst.Width = (int)((decimal)src.Width / src.Height * dst.Height);
-					dst.X = (width - dst.Width) / 2; // 扩展原图片上下
+					dst.X = (width - dst.Width) / 2; // Padding top and bottom
 				}
 			}
-			// 缩放到新图片上
+			// Draw new image
 			var newImage = new Bitmap(width, height);
 			using (var graphics = Graphics.FromImage(newImage)) {
-				// 设置高质量缩放
+				// Set smoothing mode
 				graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
 				graphics.SmoothingMode = SmoothingMode.HighQuality;
-				// 设置背景色
+				// Set background color
 				graphics.Clear(background ?? Color.Transparent);
-				// 在新图片上描画原图片
+				// Render original image with the calculated rectangle
 				graphics.DrawImage(image, dst, src, GraphicsUnit.Pixel);
 			}
 			return newImage;
 		}
 
 		/// <summary>
-		/// 保存到Jpeg图片，且可以设置压缩质量
+		/// Save to jpeg file<br/>
+		/// 保存到jpeg文件<br/>
 		/// </summary>
-		/// <param name="image">图片对象</param>
-		/// <param name="filename">保存路径，保存前会自动创建上级目录</param>
-		/// <param name="quality">压缩质量</param>
+		/// <param name="image">Image object</param>
+		/// <param name="filename">File path, will automatic create parent directories</param>
+		/// <param name="quality">Compress quality, 1~100</param>
+		[Obsolete("Please use SaveAuto")]
 		public static void SaveJpeg(this Image image, string filename, long quality) {
 			PathUtils.EnsureParentDirectory(filename);
-			var encoder = ImageCodecInfo.GetImageEncoders().First(
-				c => c.FormatID == ImageFormat.Jpeg.Guid);
-			var parameters = new EncoderParameters();
-			parameters.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
-			image.Save(filename, encoder, parameters);
-		}
-
-		/// <summary>
-		/// 保存到Icon图标
-		/// http://stackoverflow.com/questions/11434673/bitmap-save-to-save-an-icon-actually-saves-a-png
-		/// </summary>
-		/// <param name="image">图片对象</param>
-		/// <param name="filename">保存路径，保存前会自动创建上级目录</param>
-		public static void SaveIcon(this Image image, string filename) {
-			PathUtils.EnsureParentDirectory(filename);
-			using (var stream = new FileStream(filename, FileMode.Create)) {
-				// 图标头部 (ico, 1张图片)
-				stream.Write(new byte[] { 0, 0, 1, 0, 1, 0 }, 0, 6);
-				// 图片大小
-				stream.WriteByte(checked((byte)image.Width));
-				stream.WriteByte(checked((byte)image.Height));
-				// 调色板数量
-				stream.WriteByte(0);
-				// 预留
-				stream.WriteByte(0);
-				// 颜色平面数量
-				stream.Write(new byte[] { 0, 0 }, 0, 2);
-				// 每个像素的bit数
-				stream.Write(new byte[] { 32, 0 }, 0, 2);
-				// 图片数据的大小，需要写入后确定
-				stream.Write(new byte[] { 0, 0, 0, 0 }, 0, 4);
-				// 图片数据的偏移值，这里固定22
-				stream.Write(new byte[] { 22, 0, 0, 0 }, 0, 4);
-				// 写入png数据
-				image.Save(stream, ImageFormat.Png);
-				// 写入图片数据的大小
-				long imageSize = stream.Length - 22;
-				stream.Seek(14, SeekOrigin.Begin);
-				stream.WriteByte((byte)(imageSize));
-				stream.WriteByte((byte)(imageSize >> 8));
-				stream.WriteByte((byte)(imageSize >> 16));
-				stream.WriteByte((byte)(imageSize >> 24));
+			using (var stream = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write)) {
+				image.SaveJpeg(stream, quality);
 			}
 		}
 
 		/// <summary>
-		/// 保存图片，根据文件名自动识别格式
-		/// 压缩质量仅在图片格式是jpeg时有效，其他格式时会忽略这个参数
+		/// Save to jpeg<br/>
+		/// 保存到jpeg<br/>
 		/// </summary>
-		/// <param name="image">图片对象</param>
-		/// <param name="filename">保存路径，保存前会自动创建上级目录</param>
-		/// <param name="quality">压缩质量</param>
+		/// <param name="image">Image object</param>
+		/// <param name="stream">Stream object</param>
+		/// <param name="quality">Compress quality, 1~100</param>
+		/// <example>
+		/// <code language="cs">
+		/// using (var stream = new MemoryStream()) {
+		///		image.SaveJpeg(stream, 90);
+		/// }
+		/// </code>
+		/// </example>
+		private static void SaveJpeg(this Image image, Stream stream, long quality) {
+			var encoder = ImageCodecInfo.GetImageEncoders().First(
+				c => c.FormatID == ImageFormat.Jpeg.Guid);
+			var parameters = new EncoderParameters();
+			parameters.Param[0] = new EncoderParameter(Encoder.Quality, quality);
+			image.Save(stream, encoder, parameters);
+		}
+
+		/// <summary>
+		/// Save to icon file<br/>
+		/// 保存到图标文件<br/>
+		/// </summary>
+		/// <param name="image">Image object</param>
+		/// <param name="filename">File path, will automatic create parent directories</param>
+		[Obsolete("Please use SaveAuto")]
+		public static void SaveIcon(this Image image, string filename) {
+			PathUtils.EnsureParentDirectory(filename);
+			using (var stream = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write)) {
+				image.SaveIcon(stream);
+			}
+		}
+
+		/// <summary>
+		/// Save to icon, see<br/>
+		/// 保存到图标, 请查看<br/>
+		/// http://stackoverflow.com/questions/11434673/bitmap-save-to-save-an-icon-actually-saves-a-png
+		/// </summary>
+		/// <param name="image">Image object</param>
+		/// <param name="stream">Stream object</param>
+		/// <example>
+		/// <code language="cs">
+		/// using (var stream = new MemoryStream()) {
+		///		image.SaveIcon(stream);
+		/// }
+		/// </code>
+		/// </example>
+		private static void SaveIcon(this Image image, Stream stream) {
+			// Header (ico, 1 photo)
+			stream.Write(new byte[] { 0, 0, 1, 0, 1, 0 }, 0, 6);
+			// Size
+			stream.WriteByte(checked((byte)image.Width));
+			stream.WriteByte(checked((byte)image.Height));
+			// No palette
+			stream.WriteByte(0);
+			// Reserved
+			stream.WriteByte(0);
+			// No color planes
+			stream.Write(new byte[] { 0, 0 }, 0, 2);
+			// 32 bpp
+			stream.Write(new byte[] { 32, 0 }, 0, 2);
+			// Image data length, set later
+			stream.Write(new byte[] { 0, 0, 0, 0 }, 0, 4);
+			// Image data offset, fixed 22 here
+			stream.Write(new byte[] { 22, 0, 0, 0 }, 0, 4);
+			// Write png data
+			image.Save(stream, ImageFormat.Png);
+			// Write image data length
+			long imageSize = stream.Length - 22;
+			stream.Seek(14, SeekOrigin.Begin);
+			stream.WriteByte((byte)(imageSize));
+			stream.WriteByte((byte)(imageSize >> 8));
+			stream.WriteByte((byte)(imageSize >> 16));
+			stream.WriteByte((byte)(imageSize >> 24));
+		}
+
+		/// <summary>
+		/// Save image by it's file extension<br/>
+		/// Quality parameter only available for jpeg<br/>
+		/// 根据文件后缀保存图片<br/>
+		/// quality参数只在图片类型是jpeg时生效<br/>
+		/// </summary>
+		/// <param name="image">Image object</param>
+		/// <param name="filename">File path, will automatic create parent directories</param>
+		/// <param name="quality">Compress quality, 1~100</param>
+		/// <example>
+		/// <code language="cs">
+		/// image.SaveAuto("d:\\1.jpg", 90);
+		/// </code>
+		/// </example>
 		public static void SaveAuto(this Image image, string filename, long quality) {
 			PathUtils.EnsureParentDirectory(filename);
 			var extension = Path.GetExtension(filename).ToLower();
+			using (var stream = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write)) {
+				image.SaveAuto(stream, extension, quality);
+			}
+		}
+
+		/// <summary>
+		/// Save image by it's file extension<br/>
+		/// Quality parameter only available for jpeg<br/>
+		/// 根据文件后缀保存图片<br/>
+		/// quality参数只在图片类型是jpeg时生效<br/>
+		/// </summary>
+		/// <param name="image">Image object</param>
+		/// <param name="stream">Stream object</param>
+		/// <param name="extension">File extension, eg: ".jpg"</param>
+		/// <param name="quality">Compress quality, 1~100</param>
+		/// <example>
+		/// <code language="cs">
+		/// using (var stream = new MemoryStream()) {
+		///		image.SaveIcon(stream);
+		/// }
+		/// </code>
+		/// </example>
+		public static void SaveAuto(this Image image, Stream stream, string extension, long quality) {
 			if (extension == ".jpg" || extension == ".jpeg") {
-				image.SaveJpeg(filename, quality);
+				image.SaveJpeg(stream, quality);
 			} else if (extension == ".bmp") {
-				image.Save(filename, ImageFormat.Bmp);
+				image.Save(stream, ImageFormat.Bmp);
 			} else if (extension == ".gif") {
-				image.Save(filename, ImageFormat.Gif);
+				image.Save(stream, ImageFormat.Gif);
 			} else if (extension == ".ico") {
-				image.SaveIcon(filename);
+				image.SaveIcon(stream);
 			} else if (extension == ".png") {
-				image.Save(filename, ImageFormat.Png);
+				image.Save(stream, ImageFormat.Png);
 			} else if (extension == ".tiff") {
-				image.Save(filename, ImageFormat.Tiff);
+				image.Save(stream, ImageFormat.Tiff);
 			} else if (extension == ".exif") {
-				image.Save(filename, ImageFormat.Exif);
+				image.Save(stream, ImageFormat.Exif);
 			} else {
 				throw new NotSupportedException(
 					string.Format("unsupport image extension {0}", extension));
@@ -149,29 +226,34 @@ namespace ZKWebStandard.Extensions {
 	}
 
 	/// <summary>
-	/// 图片缩放模式
+	/// Image resize mode<br/>
+	/// 图片改变大小的模式<br/>
 	/// </summary>
 	public enum ImageResizeMode {
 		/// <summary>
-		/// 缩放到指定的尺寸，允许变形
+		/// Resize to the specified size, allow aspect ratio change<br/>
+		/// 改变到指定大小, 允许纵横比的变更<br/>
 		/// </summary>
 		Fixed,
 		/// <summary>
-		/// 固定宽度缩放，高度按比例计算
+		/// Resize to the specified width, height is calculated by the aspect ratio<br/>
+		/// 改变到指定宽度, 高度根据纵横比自动计算<br/>
 		/// </summary>
 		ByWidth,
 		/// <summary>
-		/// 固定高度缩放，宽度按比例计算
+		/// Resize to the specified height, width is calculated by the aspect ratio<br/>
+		/// 改变到指定高度, 宽度根据纵横比自动计算<br/>
 		/// </summary>
 		ByHeight,
 		/// <summary>
-		/// 固定宽度和高度缩放，对不符合比例的部分进行切除
+		/// Resize to the specified size, keep aspect ratio and cut the overflow part<br/>
+		/// 改变到指定大小, 保持纵横比并剪切移除的部分<br/>
 		/// </summary>
 		Cut,
 		/// <summary>
-		/// 固定宽度和高度缩放，对不符合比例的部分进行扩展
+		/// Resize to the specified size, keep aspect ratio and padding the insufficient part<br/>
+		/// 改变到指定大小, 保持纵横比并填充不足的部分<br/>
 		/// </summary>
 		Padding
 	}
 }
-#endif

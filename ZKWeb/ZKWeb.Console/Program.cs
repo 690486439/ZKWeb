@@ -1,21 +1,23 @@
 ﻿namespace ZKWeb.Console {
 	using System;
 	using System.IO;
-	using System.Reflection;
 	using Testing;
 	using Testing.TestEventHandlers;
 
 	/// <summary>
-	/// 控制台程序
-	/// 主要用来运行测试
+	/// Console program<br/>
+	/// Used for internal testing<br/>
+	/// 控制台程序<br/>
+	/// 用于内部测试<br/>
 	/// </summary>
 	internal class Program {
 		/// <summary>
-		/// 获取网站根目录
+		/// Get website root directory<br/>
+		/// 获取网站的根目录<br/>
 		/// </summary>
 		/// <returns></returns>
 		private static string GetWebsiteRootDirectory() {
-			var path = Path.GetDirectoryName(typeof(Program).GetTypeInfo().Assembly.Location);
+			var path = Path.GetDirectoryName(typeof(Program).Assembly.Location);
 			while (!Directory.Exists(Path.Combine(path, "App_Data"))) {
 				path = Path.GetDirectoryName(path);
 				if (string.IsNullOrEmpty(path)) {
@@ -26,18 +28,24 @@
 		}
 
 		/// <summary>
-		/// 控制台程序入口点
+		/// Program entry<br/>
+		/// 程序入口点<br/>
 		/// </summary>
 		/// <param name="args"></param>
 		private static void Main(string[] args) {
-			// 初始化程序
+			// Initialize application
 			Application.Initialize(GetWebsiteRootDirectory());
-			// 运行所有测试
-			var unitTestManager = Application.Ioc.Resolve<TestManager>();
-			unitTestManager.RunAllAssemblyTest(new TestConsoleEventHandler());
-			// 等待结束
-			Console.WriteLine("done");
-			Console.ReadLine();
+			// Run all tests
+			var testManager = Application.Ioc.Resolve<TestManager>();
+			var testEventHandler = new TestConsoleEventHandler();
+			testManager.RunAllAssemblyTest(testEventHandler);
+			if (testEventHandler.CompletedInfo.Counter.Failed > 0) {
+				throw new Exception("Some test failed");
+			} else {
+				Console.ForegroundColor = ConsoleColor.Green;
+				Console.WriteLine("All tests passed");
+				Console.ResetColor();
+			}
 		}
 	}
 }

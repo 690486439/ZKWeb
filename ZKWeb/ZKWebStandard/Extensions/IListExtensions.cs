@@ -3,17 +3,27 @@ using System.Collections.Generic;
 
 namespace ZKWebStandard.Extensions {
 	/// <summary>
-	/// 列表的扩展函数
+	/// IList Extension methods<br/>
+	/// 列表的扩展函数<br/>
 	/// </summary>
 	public static class IListExtensions {
 		/// <summary>
-		/// 查找符合条件的元素位置，找不到时返回-1
+		/// Find element index that match the given predicate<br/>
+		/// Return -1 if not found<br/>
+		/// 返回第一个符合指定条件的索引<br/>
+		/// 如果无则返回-1<br/>
 		/// </summary>
-		/// <typeparam name="T">元素类型</typeparam>
-		/// <param name="items">元素列表</param>
-		/// <param name="startIndex">开始位置</param>
-		/// <param name="match">匹配条件</param>
+		/// <typeparam name="T">Element type</typeparam>
+		/// <param name="items">Elements</param>
+		/// <param name="startIndex">Start position</param>
+		/// <param name="match">The predicate</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// IList&lt;int&gt; list = new List&lt;int&gt;() { 1, 2, 4 };
+		/// var index = list.FindIndex(2, x =&gt; x % 2 == 0); // 2
+		/// </code>
+		/// </example>
 		public static int FindIndex<T>(
 			this IList<T> items, int startIndex, Predicate<T> match) {
 			if (startIndex < 0) {
@@ -28,25 +38,43 @@ namespace ZKWebStandard.Extensions {
 		}
 
 		/// <summary>
-		/// 查找符合条件的元素位置，找不到时返回-1
+		/// Find element index that match the given predicate<br/>
+		/// Return -1 if not found<br/>
+		/// 返回第一个符合指定条件的索引<br/>
+		/// 如果无则返回-1<br/>
 		/// </summary>
-		/// <typeparam name="T">元素类型</typeparam>
-		/// <param name="items">元素列表</param>
-		/// <param name="match">匹配条件</param>
+		/// <typeparam name="T">Element type</typeparam>
+		/// <param name="items">Elements</param>
+		/// <param name="match">The predicate</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// IList&lt;int&gt; list = new List&lt;int&gt;() { 1, 2, 4 };
+		/// var index = list.FindIndex(x =&gt; x % 2 == 0); // 1
+		/// </code>
+		/// </example>
 		public static int FindIndex<T>(
 			this IList<T> items, Predicate<T> match) {
 			return FindIndex(items, 0, match);
 		}
 
 		/// <summary>
-		/// 从末尾开始查找符合条件的元素位置，找不到时返回-1
+		/// Find element index that match the given predicate from back to front<br/>
+		/// Return -1 if not found<br/>
+		/// 返回最后一个符合指定条件的索引<br/>
+		/// 如果无则返回-1<br/>
 		/// </summary>
-		/// <typeparam name="T">元素类型</typeparam>
-		/// <param name="items">元素列表</param>
-		/// <param name="startIndex">末尾的开始位置</param>
-		/// <param name="match">匹配条件</param>
+		/// <typeparam name="T">Element type</typeparam>
+		/// <param name="items">Elements</param>
+		/// <param name="startIndex">Start position from back</param>
+		/// <param name="match">The predicate</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// IList&lt;int&gt; list = new List&lt;int&gt;() { 1, 2, 4 };
+		/// var index = list.FindLastIndex(1, x => x % 2 == 0); // 1
+		/// </code>
+		/// </example>
 		public static int FindLastIndex<T>(
 			this IList<T> items, int startIndex, Predicate<T> match) {
 			if (startIndex > items.Count - 1) {
@@ -61,24 +89,42 @@ namespace ZKWebStandard.Extensions {
 		}
 
 		/// <summary>
-		/// 从末尾开始查找符合条件的元素位置，找不到时返回-1
+		/// Find element index that match the given predicate from back to front<br/>
+		/// Return -1 if not found<br/>
+		/// 返回最后一个符合指定条件的索引<br/>
+		/// 如果无则返回-1<br/>
 		/// </summary>
-		/// <typeparam name="T">元素类型</typeparam>
-		/// <param name="items">元素列表</param>
-		/// <param name="match">匹配条件</param>
+		/// <typeparam name="T">Element type</typeparam>
+		/// <param name="items">Elements</param>
+		/// <param name="match">The predicate</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// IList&lt;int&gt; list = new List&lt;int&gt;() { 1, 2, 4 };
+		/// var index = list.FindLastIndex(x =&gt; x % 2 == 0); // 2
+		/// </code>
+		/// </example>
 		public static int FindLastIndex<T>(
 			this IList<T> items, Predicate<T> match) {
 			return FindLastIndex(items, items.Count - 1, match);
 		}
 
 		/// <summary>
-		/// 添加元素到指定元素的前面
-		/// 如果没有则添加到最前面
+		/// Add element before the other element that match the given predicate<br/>
+		/// If no other elements matched then add the element to front<br/>
+		/// 在符合指定条件的元素前添加元素<br/>
+		/// 如果无元素符合条件则添加到开头<br/>
 		/// </summary>
-		/// <param name="items">元素列表</param>
-		/// <param name="before">添加到这个元素的前面</param>
-		/// <param name="obj">添加的元素</param>
+		/// <typeparam name="T">Element type</typeparam>
+		/// <param name="items">Elements</param>
+		/// <param name="before">The predicate</param>
+		/// <param name="obj">Element want's to add</param>
+		/// <example>
+		/// <code language="cs">
+		/// var list = new List&lt;int&gt;() { 1, 2, 4 };
+		/// list.AddBefore(x =&gt; x == 4, 3); // 1, 2, 3, 4
+		/// </code>
+		/// </example>
 		public static void AddBefore<T>(
 			this IList<T> items, Predicate<T> before, T obj) {
 			var a = new List<int>();
@@ -92,12 +138,21 @@ namespace ZKWebStandard.Extensions {
 		}
 
 		/// <summary>
-		/// 添加元素到指定元素的后面
-		/// 如果没有则添加到最后面
+		/// Add element after the other element that match the given predicate<br/>
+		/// If no other elements matched then add the element to front<br/>
+		/// 在符合指定条件的元素后添加元素<br/>
+		/// 如果无元素符合条件则添加到末尾<br/>
 		/// </summary>
-		/// <param name="items">元素列表</param>
-		/// <param name="after">添加到这个元素的后面</param>
-		/// <param name="obj">添加的元素</param>
+		/// <typeparam name="T">Element type</typeparam>
+		/// <param name="items">Elements</param>
+		/// <param name="after">The predicate</param>
+		/// <param name="obj">Element want's to add</param>
+		/// <example>
+		/// <code language="cs">
+		/// var list = new List&lt;int&gt;() { 1, 2, 4 };
+		/// list.AddAfter(x =&gt; x == 2, 3); // 1, 2, 3, 4
+		/// </code>
+		/// </example>
 		public static void AddAfter<T>(
 			this IList<T> items, Predicate<T> after, T obj) {
 			var index = items.FindLastIndex(x => after(x));
@@ -108,12 +163,19 @@ namespace ZKWebStandard.Extensions {
 		}
 
 		/// <summary>
-		/// 添加元素列表到列表中
+		/// Batch add elements<br/>
+		/// 批量添加元素<br/>
 		/// </summary>
-		/// <typeparam name="T">元素类型</typeparam>
-		/// <param name="list">列表</param>
-		/// <param name="items">元素列表</param>
+		/// <typeparam name="T">Element type</typeparam>
+		/// <param name="list">Elements</param>
+		/// <param name="items">Elements want's to add</param>
 		/// <returns></returns>
+		/// <example>
+		/// <code language="cs">
+		/// IList&lt;int&gt; list = new List&lt;int&gt;();
+		/// list.AddRange(new[] { 1, 2, 3 });
+		/// </code>
+		/// </example>
 		public static void AddRange<T>(this IList<T> list, IEnumerable<T> items) {
 			foreach (var item in items) {
 				list.Add(item);

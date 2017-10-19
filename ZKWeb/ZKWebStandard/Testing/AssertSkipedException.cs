@@ -2,14 +2,18 @@
 
 namespace ZKWebStandard.Testing {
 	/// <summary>
-	/// 抛出此例外时
-	/// 会把当前测试作为跳过处理
+	/// Assert skipped exception<br/>
+	/// Will make the test skipped<br/>
+	/// 断言跳过的例外<br/>
+	/// 会跳过测试<br/>
 	/// </summary>
+	/// <seealso cref="Assert"/>
 	public class AssertSkipedException : Exception {
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
-		/// <param name="reason">跳过原因</param>
+		/// <param name="reason">The reason</param>
 		public AssertSkipedException(string reason) : base(reason) { }
 	}
 }

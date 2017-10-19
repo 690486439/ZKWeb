@@ -1,32 +1,36 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
-using ZKWeb.Server;
+using ZKWeb.Storage;
 
 namespace ZKWeb.Logging {
 	/// <summary>
-	/// 日志管理器
+	/// Log manager<br/>
+	/// 日志管理器<br/>
 	/// </summary>
+	/// <example>
+	/// <code language="cs">
+	/// var logManager = Application.Ioc.Resolve&lt;LogManager&gt;();
+	/// logManager.LogDebug("debug message");
+	/// </code>
+	/// </example>
 	public class LogManager {
 		/// <summary>
-		/// 记录日志
+		/// Log message to file<br/>
+		/// 记录日志到文件<br/>
 		/// </summary>
 		public virtual void Log(string filename, string message) {
-			// 创建日志文件夹
-			var pathConfig = Application.Ioc.Resolve<PathConfig>();
-			var logsDirectory = pathConfig.LogsDirectory;
-			Directory.CreateDirectory(logsDirectory);
-			// 写入到控制台
+			// Write to console
 			Console.Write(message);
-			// 写入到日志文件
-			// 有可能因为多个进程同时打开失败，最多重试100次
+			// Write to log file
+			// Retry up to 100 times if inconsistency occurs between the threads
+			var fileStorage = Application.Ioc.Resolve<IFileStorage>();
+			var logFile = fileStorage.GetStorageFile("logs", filename);
 			var now = DateTime.UtcNow.ToLocalTime();
-			var path = Path.Combine(logsDirectory, filename);
 			for (int n = 0; n < 100; ++n) {
 				try {
-					File.AppendAllText(path, message, Encoding.UTF8);
+					logFile.AppendAllText(message);
 					break;
 				} catch (IOException) {
 					Thread.Sleep(5);
@@ -35,7 +39,8 @@ namespace ZKWeb.Logging {
 		}
 
 		/// <summary>
-		/// 记录除错级别的日志
+		/// Log debug level message<br/>
+		/// 记录除错等级的信息<br/>
 		/// </summary>
 		public virtual void LogDebug(string message,
 			[CallerMemberName] string memberName = null) {
@@ -45,7 +50,8 @@ namespace ZKWeb.Logging {
 		}
 
 		/// <summary>
-		/// 记录消息级别的日志
+		/// Log information level message<br/>
+		/// 记录一般等级的信息<br/>
 		/// </summary>
 		public virtual void LogInfo(string message,
 			[CallerMemberName] string memberName = null) {
@@ -55,7 +61,8 @@ namespace ZKWeb.Logging {
 		}
 
 		/// <summary>
-		/// 记录错误级别的日志
+		/// Log error level message<br/>
+		/// 记录错误等级的信息<br/>
 		/// </summary>
 		public virtual void LogError(string message,
 			[CallerMemberName] string memberName = null,
@@ -67,7 +74,8 @@ namespace ZKWeb.Logging {
 		}
 
 		/// <summary>
-		/// 记录交易日志
+		/// Log transaction (releated to money) message<br/>
+		/// 记录交易(关系到钱财的)信息<br/>
 		/// </summary>
 		public virtual void LogTransaction(string message,
 			[CallerMemberName] string memberName = null) {

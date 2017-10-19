@@ -1,47 +1,120 @@
 ﻿using System;
 using System.IO;
-using ZKWeb.Web;
+using ZKWebStandard.Collections;
+using ZKWebStandard.Extensions;
 using ZKWebStandard.Web;
 
 namespace ZKWeb.Web.ActionResults {
 	/// <summary>
-	/// 数据流结果
+	/// Write contents from stream to response<br/>
+	/// 从数据流读取内容并写入到回应<br/>
 	/// </summary>
+	/// <seealso cref="ControllerManager"/>
+	/// <seealso cref="IController"/>
+	/// <example>
+	/// <code language="cs">
+	/// public ExampleController : IController {
+	///		[Action("example")]
+	///		public IActionResult Example() {
+	///			var stream = new MemoryStream(new byte[] { 1, 2, 3 });
+	///			return new StreamResult(stream);
+	///		}
+	///	}
+	/// </code>
+	/// </example>
 	public class StreamResult : IActionResult, IDisposable {
 		/// <summary>
-		/// 数据流对象
+		/// Stream object, auto dispose after wrote to response<br/>
+		/// 数据流对象, 自动销毁<br/>
 		/// </summary>
 		public Stream Stream { get; set; }
 		/// <summary>
-		/// 内容类型
+		/// Mime type<br/>
+		/// MIME类型<br/>
 		/// </summary>
 		public string ContentType { get; set; }
+		/// <summary>
+		/// Range request in bytes<br/>
+		/// 要求返回的内容范围<br/>
+		/// </summary>
+		public Pair<long?, long?> BytesRange { get; set; }
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
-		/// <param name="stream">数据流对象</param>
-		/// <param name="contentType">内容类型，默认是application/octet-stream</param>
-		public StreamResult(Stream stream, string contentType = null) {
+		/// <param name="stream">The stream</param>
+		public StreamResult(Stream stream) :
+			this(stream, "application/octet-stream") { }
+
+		/// <summary>
+		/// Initialize<br/>
+		/// 初始化<br/>
+		/// </summary>
+		/// <param name="stream">The stream</param>
+		/// <param name="contentType">Mime type</param>
+		public StreamResult(Stream stream, string contentType) :
+			this(stream, contentType, Pair.Create<long?, long?>(null, null)) { }
+
+		/// <summary>
+		/// Initialize<br/>
+		/// 初始化<br/>
+		/// </summary>
+		/// <param name="stream">The stream</param>
+		/// <param name="bytesRange">Range request in bytes</param>
+		public StreamResult(Stream stream, Pair<long?, long?> bytesRange) :
+			this(stream, "application/octet-stream", bytesRange) { }
+
+		/// <summary>
+		/// Initialize<br/>
+		/// 初始化<br/>
+		/// </summary>
+		/// <param name="stream">The stream</param>
+		/// <param name="contentType">Mime type</param>
+		/// <param name="bytesRange">Range request in bytes</param>
+		public StreamResult(Stream stream, string contentType, Pair<long?, long?> bytesRange) {
 			Stream = stream;
-			ContentType = contentType ?? "application/octet-stream";
+			ContentType = contentType;
+			BytesRange = bytesRange;
 		}
 
 		/// <summary>
-		/// 写入数据流到Http回应
+		/// Write contents from stream to http response<br/>
+		/// 从数据流读取内容并写入到http回应<br/>
 		/// </summary>
-		/// <param name="response">http回应</param>
+		/// <param name="response">Http response</param>
 		public void WriteResponse(IHttpResponse response) {
-			// 设置状态代码和内容类型
-			response.StatusCode = 200;
-			response.ContentType = ContentType;
-			// 写入数据流到Http回应
-			Stream.CopyTo(response.Body);
+			if (Stream.CanSeek &&
+				(BytesRange.First != null || BytesRange.Second != null)) {
+				// Respect range request
+				Stream.Seek(0, SeekOrigin.End);
+				var length = Stream.Position;
+				if ((BytesRange.First.HasValue && BytesRange.First.Value >= length) ||
+					(BytesRange.Second.HasValue && BytesRange.Second.Value >= length) ||
+					(BytesRange.First > BytesRange.Second)) {
+					// Out of range
+					response.StatusCode = 200;
+					return;
+				}
+				var realBegin = BytesRange.First ?? 0;
+				var realFinish = BytesRange.Second ?? (length - 1);
+				response.StatusCode = 206;
+				response.ContentType = ContentType;
+				response.AddHeader("Accept-Ranges", "bytes");
+				response.AddHeader("Content-Range", $"{realBegin}-{realFinish}/{length}");
+				Stream.CopyTo(response.Body, 1024, realBegin, realFinish - realBegin + 1);
+			} else {
+				// Copy all contents
+				response.StatusCode = 200;
+				response.ContentType = ContentType;
+				Stream.CopyTo(response.Body);
+			}
 			response.Body.Flush();
 		}
 
 		/// <summary>
-		/// 清理资源
+		/// Dispose stream<br/>
+		/// 释放数据流<br/>
 		/// </summary>
 		public void Dispose() {
 			Stream.Dispose();

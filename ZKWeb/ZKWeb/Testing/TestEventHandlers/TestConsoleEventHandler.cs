@@ -4,10 +4,14 @@ using ZKWebStandard.Testing.Events;
 
 namespace ZKWeb.Testing.TestEventHandlers {
 	/// <summary>
-	/// 在控制台中运行测试使用的事件处理器
+	/// Test event handler for running tests from console<br/>
+	/// 控制台运行测试使用的事件处理器<br/>
 	/// </summary>
+	/// <seealso cref="TestManager"/>
 	public class TestConsoleEventHandler : ITestEventHandler {
 #pragma warning disable CS1591
+		public AllTestCompletedInfo CompletedInfo { get; set; }
+
 		public void OnAllTestStarting(AllTestStartingInfo info) {
 			Console.WriteLine($"starting {info.Runner.Assembly.GetName().Name} tests...");
 		}
@@ -18,6 +22,7 @@ namespace ZKWeb.Testing.TestEventHandlers {
 				$"{info.Counter.Passed} passed, {info.Counter.Failed} failed, {info.Counter.Skipped} skiped.");
 			Console.WriteLine();
 			Console.ResetColor();
+			CompletedInfo = info;
 		}
 
 		public void OnDebugMessage(DebugMessageInfo info) {

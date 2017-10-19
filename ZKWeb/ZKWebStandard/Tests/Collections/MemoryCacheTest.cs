@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using ZKWebStandard.Collections;
+using ZKWebStandard.Extensions;
 using ZKWebStandard.Testing;
 
 namespace ZKWebStandard.Tests.Collections {
@@ -34,7 +35,7 @@ namespace ZKWebStandard.Tests.Collections {
 			Assert.Equals(memoryCache.GetOrDefault(3), "TestDataC");
 			Assert.Equals(memoryCache.GetOrDefault(100), null);
 			Assert.Equals(memoryCache.GetOrDefault(100, "Default"), "Default");
-			// GetOrDefault，已过期未删除时
+			// GetOrDefault, expired
 			memoryCache.Put(1, "TestDataA", TimeSpan.FromMinutes(-1));
 			Assert.Equals(memoryCache.GetOrDefault(1), null);
 			// GetOrCreate

@@ -2,57 +2,70 @@
 
 namespace ZKWebStandard.Utils {
 	/// <summary>
-	/// 正则工具类
+	/// Regex utility functions<br/>
+	/// 正则表达式的工具函数<br/>
 	/// </summary>
 	public static class RegexUtils {
 		/// <summary>
-		/// 表达式
+		/// Expressions<br/>
+		/// 正则表达式<br/>
 		/// </summary>
 		public static class Expressions {
 			/// <summary>
-			/// 邮箱
+			/// Email<br/>
+			/// 邮箱<br/>
 			/// </summary>
-			public const string Email = @"^[\w-]+@[\w-]+\.[\w-]+$";
+			public const string Email = @"^[\w-]+@[\w-]+(\.[\w-]+)+$";
 			/// <summary>
-			/// 中国手机号
+			/// China mobile<br/>
+			/// 中国的手机号码<br/>
 			/// </summary>
 			public const string ChinaMobile = "^1[3456789][0-9]{9}$";
 			/// <summary>
-			/// 整数
+			/// Digits<br/>
+			/// 整数<br/>
 			/// </summary>
 			public const string Digits = @"^-?[\d]+$";
 			/// <summary>
-			/// 整数和小数
+			/// Decimal<br/>
+			/// 整数和小数<br/>
 			/// </summary>
 			public const string Decimal = @"^-?[\d]+(\.[\d]+)?$";
 			/// <summary>
-			/// 电话号码
+			/// Tel<br/>
+			/// 电话号码<br/>
 			/// </summary>
 			public const string Tel = @"^\+?[\d\s-]+$";
 		}
 
 		/// <summary>
-		/// 表达式对象
+		/// Regex objects<br/>
+		/// 正则对象<br/>
 		/// </summary>
 		public static class Validators {
 			/// <summary>
-			/// 邮箱
+			/// Email<br/>
+			/// 邮箱<br/>
 			/// </summary>
 			public static Regex Email { get; } = new Regex(Expressions.Email);
 			/// <summary>
-			/// 中国手机号
+			/// China mobile<br/>
+			/// 中国的手机号码<br/>
 			/// </summary>
 			public static Regex ChinaMobile { get; } = new Regex(Expressions.ChinaMobile);
 			/// <summary>
-			/// 整数
+			/// Digits<br/>
+			/// 整数<br/>
 			/// </summary>
 			public static Regex Digits { get; } = new Regex(Expressions.Digits);
 			/// <summary>
-			/// 整数和小数
+			/// Decimal<br/>
+			/// 整数和小数<br/>
 			/// </summary>
 			public static Regex Decimal { get; } = new Regex(Expressions.Decimal);
 			/// <summary>
-			/// 电话号码
+			/// Tel<br/>
+			/// 电话<br/>
 			/// </summary>
 			public static Regex Tel { get; } = new Regex(Expressions.Tel);
 		}

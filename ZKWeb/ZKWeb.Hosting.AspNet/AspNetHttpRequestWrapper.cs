@@ -7,15 +7,18 @@ using System.Web;
 
 namespace ZKWeb.Hosting.AspNet {
 	/// <summary>
-	/// 包装原始的Http请求
+	/// Http request wrapper for Asp.net<br/>
+	/// Asp.Net Http请求的包装类<br/>
 	/// </summary>
 	internal class AspNetHttpRequestWrapper : IHttpRequest {
 		/// <summary>
-		/// 所属的Http上下文
+		/// Parent http context<br/>
+		/// 所属的Http上下文<br/>
 		/// </summary>
 		protected AspNetHttpContextWrapper ParentContext { get; set; }
 		/// <summary>
-		/// 原始的Http请求
+		/// Original http request<br/>
+		/// 原始的Http请求<br/>
 		/// </summary>
 		protected HttpRequest OriginalRequest { get; set; }
 
@@ -58,6 +61,7 @@ namespace ZKWeb.Hosting.AspNet {
 		public int RemotePort {
 			get { return int.Parse(OriginalRequest.ServerVariables["REMOTE_PORT"]); }
 		}
+		public IDictionary<string, object> CustomParameters { get; }
 
 		public string GetCookie(string key) {
 			return OriginalRequest.Cookies[key]?.Value;
@@ -115,14 +119,16 @@ namespace ZKWeb.Hosting.AspNet {
 		}
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
-		/// <param name="parentContext">所属的Http上下文</param>
-		/// <param name="originalRequest">原始Http请求</param>
+		/// <param name="parentContext">Parent http context</param>
+		/// <param name="originalRequest">Original http request</param>
 		public AspNetHttpRequestWrapper(
 			AspNetHttpContextWrapper parentContext, HttpRequest originalRequest) {
 			ParentContext = parentContext;
 			OriginalRequest = originalRequest;
+			CustomParameters = new Dictionary<string, object>();
 		}
 	}
 }

@@ -1,5 +1,4 @@
-﻿#if !NETCORE
-using System.Drawing;
+﻿using System.DrawingCore;
 using System.IO;
 using ZKWeb.Web.ActionResults;
 using ZKWebStandard.Testing;
@@ -22,4 +21,3 @@ namespace ZKWeb.Tests.Web.ActionResults {
 		}
 	}
 }
-#endif

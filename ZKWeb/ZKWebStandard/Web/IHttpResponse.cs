@@ -1,49 +1,59 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace ZKWebStandard.Web {
 	/// <summary>
-	/// Http回应的接口
+	/// Interface for http response<br/>
+	/// Http回应的接口<br/>
 	/// </summary>
 	public interface IHttpResponse {
 		/// <summary>
-		/// 回应的数据流
+		/// Reponse body<br/>
+		/// 回应内容<br/>
 		/// </summary>
 		Stream Body { get; }
 		/// <summary>
-		/// 内容类型
+		/// Content type<br/>
+		/// 内容类型<br/>
 		/// </summary>
 		string ContentType { get; set; }
 		/// <summary>
-		/// 所属的Http上下文
+		/// Parent http context<br/>
+		/// 所属的Http上下文<br/>
 		/// </summary>
 		IHttpContext HttpContext { get; }
 		/// <summary>
-		/// 状态代码
+		/// Status code<br/>
+		/// 状态代码<br/>
 		/// </summary>
 		int StatusCode { get; set; }
 
 		/// <summary>
-		/// 设置Cookie值
+		/// Set cookie value<br/>
+		/// 设置Cookie值<br/>
 		/// </summary>
-		/// <param name="key">键名</param>
-		/// <param name="value">Cookie值</param>
-		/// <param name="options">使用的选项</param>
+		/// <param name="key">Cookie key</param>
+		/// <param name="value">Cookie value</param>
+		/// <param name="options">Options for setting cookie</param>
 		void SetCookie(string key, string value, HttpCookieOptions options);
 		/// <summary>
-		/// 添加Http头的值
+		/// Add http header<br/>
+		/// 添加Http头<br/>
 		/// </summary>
-		/// <param name="key">键名</param>
-		/// <param name="value">值</param>
+		/// <param name="key">Header key</param>
+		/// <param name="value">Header value</param>
 		void AddHeader(string key, string value);
 		/// <summary>
-		/// 跳转到指定的地址
+		/// Redirect to url<br/>
+		/// 重定向到Url<br/>
 		/// </summary>
-		/// <param name="url">Url地址</param>
-		/// <param name="permanent">是否永久跳转</param>
+		/// <param name="url">Url address</param>
+		/// <param name="permanent">Is permanent redirect</param>
 		void Redirect(string url, bool permanent);
 		/// <summary>
-		/// 结束回应
+		/// End response<br/>
+		/// It should throw an exception to stop processing<br/>
+		/// 结束回应<br/>
+		/// 它会抛出一个例外用于停止继续处理<br/>
 		/// </summary>
 		void End();
 	}

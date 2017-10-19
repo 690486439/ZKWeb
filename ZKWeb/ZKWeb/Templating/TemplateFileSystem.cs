@@ -4,65 +4,75 @@ using System;
 using System.IO;
 using ZKWeb.Cache;
 using ZKWeb.Server;
+using ZKWeb.Storage;
 using ZKWebStandard.Collections;
 using ZKWebStandard.Extensions;
 
 namespace ZKWeb.Templating {
 	/// <summary>
-	/// 模板系统使用的文件系统
+	/// Dotliquid template file system<br/>
+	/// Dotliquid使用的模板文件系统<br/>
 	/// </summary>
+	/// <seealso cref="TemplateManager"/>
 	public class TemplateFileSystem : IFileSystem, ICacheCleaner {
 		/// <summary>
-		/// 模板缓存时间
-		/// 默认是180秒，可通过网站配置指定
+		/// Parsed template cache time<br/>
+		/// Default is 180s, able to override from website configuration<br/>
+		/// 已解析模板的缓存时间<br/>
+		/// 默认是180秒, 可以根据网站配置覆盖<br/>
 		/// </summary>
 		public TimeSpan TemplateCacheTime { get; set; }
 		/// <summary>
-		/// 模板的缓存
-		/// { 模板的绝对路径: (模板对象, 文件修改时间) }
+		/// Parsed template cache<br/>
+		/// 已解析模板的缓存<br/>
+		/// { Full path: (Template object, Modify time) }<br/>
 		/// </summary>
-		protected MemoryCache<string, Pair<Template, DateTime>> TemplateCache { get; set; }
+		protected IKeyValueCache<string, Pair<Template, DateTime>> TemplateCache { get; set; }
 
 		/// <summary>
-		/// 初始化
+		/// Initialize<br/>
+		/// 初始化<br/>
 		/// </summary>
 		public TemplateFileSystem() {
-			var configManager = Application.Ioc.Resolve<ConfigManager>();
+			var configManager = Application.Ioc.Resolve<WebsiteConfigManager>();
+			var cacheFactory = Application.Ioc.Resolve<ICacheFactory>();
 			TemplateCacheTime = TimeSpan.FromSeconds(
 				configManager.WebsiteConfig.Extra.GetOrDefault(ExtraConfigKeys.TemplateCacheTime, 180));
-			TemplateCache = new MemoryCache<string, Pair<Template, DateTime>>();
+			TemplateCache = cacheFactory.CreateCache<string, Pair<Template, DateTime>>();
 		}
 
 		/// <summary>
-		/// 从模板路径读取模板
+		/// Read template object from path<br/>
+		/// 从路径读取模板对象<br/>
 		/// </summary>
-		/// <param name="context">上下文</param>
-		/// <param name="templateName">模板路径</param>
+		/// <param name="context">Template context</param>
+		/// <param name="templateName">Template path</param>
 		/// <returns></returns>
 		public virtual object ReadTemplateFile(Context context, string templateName) {
-			// 获取模板的绝对路径
-			var pathManager = Application.Ioc.Resolve<PathManager>();
-			var fullPath = pathManager.GetTemplateFullPath(templateName);
-			if (fullPath == null) {
+			// Get template full path
+			var fileStorage = Application.Ioc.Resolve<IFileStorage>();
+			var templateFile = fileStorage.GetTemplateFile(templateName);
+			if (!templateFile.Exists) {
 				throw new FileNotFoundException(
 					string.Format("template {0} not found", templateName));
 			}
-			// 从缓存获取模板
-			var lastWriteTime = File.GetLastWriteTimeUtc(fullPath);
-			var cache = TemplateCache.GetOrDefault(fullPath);
+			// Get parsed object from cache
+			var lastWriteTime = templateFile.LastWriteTimeUtc;
+			var cache = TemplateCache.GetOrDefault(templateFile.UniqueIdentifier);
 			if (cache.First != null && cache.Second == lastWriteTime) {
 				return cache.First;
 			}
-			// 解析模板并保存到缓存
-			var sources = File.ReadAllText(fullPath);
+			// Parse template and store to cache
+			var sources = templateFile.ReadAllText();
 			var template = Template.Parse(sources);
 			cache = Pair.Create(template, lastWriteTime);
-			TemplateCache.Put(fullPath, cache, TemplateCacheTime);
+			TemplateCache.Put(templateFile.UniqueIdentifier, cache, TemplateCacheTime);
 			return template;
 		}
 
 		/// <summary>
-		/// 清理缓存
+		/// Clear cache<br/>
+		/// 清理缓存<br/>
 		/// </summary>
 		public virtual void ClearCache() {
 			TemplateCache.Clear();

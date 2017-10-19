@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package>
+	<metadata>
+		<id>ZKWeb.ORM.MongoDB</id>
+		<version>2.0.0</version>
+		<title>ZKWeb.ORM.MongoDB</title>
+		<authors>303248153</authors>
+		<owners>303248153</owners>
+		<description>Support use MongoDB in ZKWeb. For more information please visit project site.</description>
+		<summary>Support use MongoDB in ZKWeb. For more information please visit project site.</summary>
+		<language>en-US</language>
+		<projectUrl>https://github.com/zkweb-framework/ZKWeb</projectUrl>
+		<licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
+		<requireLicenseAcceptance>true</requireLicenseAcceptance>
+		<tags></tags>
+		<dependencies>
+			<dependency id="ZKWeb" version="2.0.0" />
+			<dependency id="MongoDB.Driver" version="2.4.4" />
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="..\..\LICENSE.txt" target="." />
+		<file src="..\ZKWeb.ORM.MongoDB\bin\Release\net461\ZKWeb.ORM.MongoDB.dll" target="lib\net461" />
+		<file src="..\ZKWeb.ORM.MongoDB\bin\Release\net461\ZKWeb.ORM.MongoDB.xml" target="lib\net461" />
+		<file src="..\ZKWeb.ORM.MongoDB\bin\Release\net461\ZKWeb.ORM.MongoDB.pdb" target="lib\net461" />
+		<file src="..\ZKWeb.ORM.MongoDB\bin\Release\netstandard2.0\ZKWeb.ORM.MongoDB.dll" target="lib\netstandard2.0" />
+		<file src="..\ZKWeb.ORM.MongoDB\bin\Release\netstandard2.0\ZKWeb.ORM.MongoDB.xml" target="lib\netstandard2.0" />
+		<file src="..\ZKWeb.ORM.MongoDB\bin\Release\netstandard2.0\ZKWeb.ORM.MongoDB.pdb" target="lib\netstandard2.0" />
+	</files>
+</package>
